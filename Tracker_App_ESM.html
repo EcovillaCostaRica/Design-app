@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracker Proyectos Diseño · ESM</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --verde:#4a7c2f; --verde-c:#6ba444; --verde-o:#2d4f1c;
+  --crema:#f7f4ee; --beige:#ece7dc; --beige-o:#d8d0c0;
+  --negro:#1a1a18; --gris:#6b6b65; --gris-c:#ccc8be;
+  --naranja:#c96b1a; --rojo:#a82e2e; --azul:#2a5c8a;
+  --morado:#7a3fa0;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Jost',sans-serif;background:var(--crema);color:var(--negro);font-weight:300;}
+
+/* HEADER */
+header{background:var(--negro);padding:0 40px;height:68px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--verde);position:sticky;top:0;z-index:300;}
+.lw{display:flex;align-items:center;gap:16px;}
+.lw img{height:44px;}
+.hd{border-left:1px solid rgba(255,255,255,0.15);padding-left:16px;}
+.hd h1{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;color:var(--crema);letter-spacing:0.08em;text-transform:uppercase;}
+.hd p{font-size:0.65rem;color:var(--verde-c);letter-spacing:0.14em;text-transform:uppercase;font-weight:600;margin-top:1px;}
+.user-area{display:flex;align-items:center;gap:10px;}
+.user-badge{font-size:0.72rem;color:rgba(255,255,255,0.65);padding:4px 12px;border:1px solid rgba(255,255,255,0.2);border-radius:20px;}
+.user-role{font-size:0.6rem;color:var(--verde-c);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-left:6px;}
+.btn-logout{background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);padding:4px 10px;border-radius:4px;font-size:0.65rem;cursor:pointer;font-family:'Jost',sans-serif;transition:all 0.15s;}
+.btn-logout:hover{border-color:rgba(255,255,255,0.35);color:rgba(255,255,255,0.65);}
+
+/* NAV */
+.mnav{background:var(--negro);padding:0 40px;display:flex;gap:2px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.nb{background:none;border:none;cursor:pointer;font-family:'Jost',sans-serif;font-size:0.73rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.38);padding:12px 20px;border-bottom:3px solid transparent;margin-bottom:-1px;transition:all 0.2s;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.nb:hover{color:rgba(255,255,255,0.65);}
+.nb.active{color:var(--verde-c);border-bottom-color:var(--verde-c);}
+.badge-count{background:var(--naranja);color:white;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:10px;line-height:1.4;}
+
+main{padding:32px 40px 60px;max-width:1700px;margin:0 auto;}
+.view{display:none;}
+.view.active{display:block;animation:fu 0.25s ease;}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* LOADING */
+.loading-state{text-align:center;padding:80px 40px;color:var(--gris);}
+.spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--beige-o);border-top-color:var(--verde);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.kpi-section{background:white;border:1px solid var(--beige-o);border-radius:8px;overflow:hidden;}
+.kpi-section-head{padding:10px 16px;font-size:0.65rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.kpi-section-head.cobros{background:var(--negro);color:rgba(255,255,255,0.55);}
+.kpi-section-head.costes{background:#1a2a3a;color:rgba(255,255,255,0.55);}
+.kpi-section-head.reemb{background:#2a1a3a;color:rgba(255,255,255,0.55);}
+.kpi-section-body{display:grid;grid-template-columns:repeat(3,1fr);gap:0;}
+.kpi{padding:14px 16px;border-right:1px solid var(--beige);}
+.kpi:last-child{border-right:none;}
+.kpi-n{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:300;line-height:1;}
+.kpi-l{font-size:0.62rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gris);margin-top:3px;}
+.cn-verde{color:var(--verde);} .cn-naranja{color:var(--naranja);} .cn-rojo{color:var(--rojo);}
+.cn-azul{color:var(--azul);} .cn-morado{color:var(--morado);}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.fb{background:white;border:1px solid var(--beige-o);border-radius:20px;padding:5px 13px;font-family:'Jost',sans-serif;font-size:0.72rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--gris);cursor:pointer;transition:all 0.15s;}
+.fb:hover{border-color:var(--verde-c);color:var(--verde);}
+.fb.on{background:var(--verde);border-color:var(--verde);color:white;}
+.sb{background:white;border:1px solid var(--beige-o);border-radius:20px;padding:5px 16px;font-family:'Jost',sans-serif;font-size:0.82rem;color:var(--negro);outline:none;width:220px;}
+.sb:focus{border-color:var(--verde-c);}
+
+/* TABLE */
+.tw{background:white;border:1px solid var(--beige-o);border-radius:8px;overflow:hidden;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:0.8rem;min-width:1200px;}
+thead tr{background:var(--negro);}
+th{padding:10px 12px;text-align:left;font-size:0.62rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);white-space:nowrap;}
+th.sep{border-left:2px solid rgba(255,255,255,0.15);}
+tbody tr{border-bottom:1px solid var(--beige);transition:background 0.12s;cursor:pointer;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--crema);}
+td{padding:9px 12px;vertical-align:middle;}
+td.sep{border-left:2px solid var(--beige-o);}
+.tl{font-weight:600;color:var(--negro);} .tg{color:var(--gris);font-size:0.75rem;}
+.tn{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;}
+.tn.v{color:var(--verde);} .tn.n{color:var(--naranja);} .tn.r{color:var(--rojo);}
+.tn.a{color:var(--azul);} .tn.m{color:var(--morado);}
+.be{display:inline-block;font-size:0.62rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:10px;}
+.ef{background:#eaf4e2;color:var(--verde-o);} .en{background:#fce8e8;color:var(--rojo);}
+.ec{background:#f5f0e8;color:var(--gris);} .ep{background:#eaf4e2;color:var(--verde-o);}
+.ee{background:#fff8e8;color:#7a5a00;} .em{background:#f0e8fa;color:var(--morado);}
+.es{background:#fff0e0;color:var(--naranja);}
+.pb{display:flex;align-items:center;gap:6px;}
+.pb-bg{flex:1;height:4px;background:var(--beige);border-radius:2px;overflow:hidden;min-width:50px;}
+.pb-f{height:100%;border-radius:2px;}
+.pb-f.cobros{background:var(--verde-c);} .pb-f.costes{background:var(--azul);} .pb-f.reemb{background:var(--morado);}
+.pb-t{font-size:0.7rem;color:var(--gris);min-width:28px;text-align:right;}
+.btn-v{background:var(--negro);color:white;border:none;border-radius:4px;padding:4px 11px;font-family:'Jost',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.15s;white-space:nowrap;}
+.btn-v:hover{background:var(--verde);}
+.alert-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--naranja);margin-left:4px;vertical-align:middle;}
+
+/* DETALLE */
+.back-btn{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--beige-o);border-radius:4px;padding:7px 14px;font-family:'Jost',sans-serif;font-size:0.73rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gris);cursor:pointer;margin-bottom:22px;transition:all 0.15s;}
+.back-btn:hover{border-color:var(--verde-c);color:var(--verde);}
+.d-top{display:flex;align-items:baseline;gap:16px;margin-bottom:20px;}
+.d-lote{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;color:var(--verde-o);line-height:1;}
+.d-info{flex:1;}
+.d-cliente{font-size:1rem;font-weight:500;}
+.d-sub{font-size:0.78rem;color:var(--gris);margin-top:3px;}
+.d-hero{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.dhc{background:white;border:1px solid var(--beige-o);border-radius:8px;padding:16px 18px;}
+.dhc.dark{background:var(--negro);}
+.dhc-label{font-size:0.62rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gris);margin-bottom:8px;}
+.dhc.dark .dhc-label{color:rgba(255,255,255,0.4);}
+.dhc-val{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:300;line-height:1;}
+.dhc.dark .dhc-val{color:var(--verde-c);}
+.dhc-sub{font-size:0.72rem;color:var(--gris);margin-top:4px;}
+.dhc.dark .dhc-sub{color:rgba(255,255,255,0.35);}
+.d-sections{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.dsec{background:white;border:1px solid var(--beige-o);border-radius:8px;overflow:hidden;}
+.dsec.full{grid-column:1/-1;}
+.dsec-head{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--beige);}
+.dsec-head.cobros-h{background:#f0f7ea;} .dsec-head.costes-h{background:#eaf0f7;}
+.dsec-head.reemb-h{background:#f5eafa;} .dsec-head.notas-h{background:var(--crema);}
+.dsec-icon{font-size:1rem;}
+.dsec-title{font-size:0.73rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;flex:1;}
+.dsec-body{padding:14px 18px;}
+.hr{display:grid;grid-template-columns:28px 1fr auto auto auto;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--beige);font-size:0.82rem;}
+.hr:last-child{border-bottom:none;}
+.hn{width:26px;height:26px;border-radius:50%;background:var(--beige);display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:var(--gris);flex-shrink:0;}
+.hn.cob{background:var(--verde);color:white;} .hn.env{background:var(--naranja);color:white;} .hn.sol{background:var(--morado);color:white;}
+.hi-desc{font-weight:500;} .hi-fac{font-size:0.7rem;color:var(--gris);margin-top:1px;}
+.hi-m{font-family:'Cormorant Garamond',serif;font-size:1.15rem;text-align:right;}
+.hi-cobrado{font-size:0.72rem;color:var(--verde);text-align:right;}
+.pr{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--beige);font-size:0.82rem;}
+.pr:last-child{border-bottom:none;}
+.pr-tipo{font-weight:500;} .pr-prov{font-size:0.7rem;color:var(--gris);margin-top:1px;}
+.pr-coste{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gris);}
+.pr-pag{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--azul);}
+.pr-pdte{font-size:0.7rem;color:var(--naranja);}
+.rr{display:grid;grid-template-columns:1fr auto auto auto auto;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--beige);font-size:0.82rem;}
+.rr:last-child{border-bottom:none;}
+.rr-concepto{font-weight:500;} .rr-prov{font-size:0.7rem;color:var(--gris);margin-top:1px;}
+.rr-coste{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gris);}
+.rr-pag{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--azul);}
+.rr-os-input{border:1px solid var(--gris-c);border-radius:4px;padding:3px 8px;font-family:'Jost',sans-serif;font-size:0.75rem;width:100px;color:var(--negro);background:var(--crema);}
+.rr-os-input:focus{outline:none;border-color:var(--morado);}
+.rr-check{display:flex;align-items:center;gap:5px;font-size:0.72rem;cursor:pointer;white-space:nowrap;}
+.rr-check input{accent-color:var(--morado);width:14px;height:14px;cursor:pointer;}
+.subtotal-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:2px solid var(--beige-o);margin-top:6px;font-size:0.82rem;}
+.notas-area{width:100%;border:1px solid var(--beige-o);border-radius:6px;padding:10px 12px;font-family:'Jost',sans-serif;font-size:0.83rem;color:var(--negro);resize:vertical;min-height:80px;background:var(--crema);outline:none;font-weight:300;}
+.notas-area:focus{border-color:var(--verde-c);background:white;}
+.saved-msg{font-size:0.7rem;color:var(--verde);margin-top:4px;display:none;}
+.empty{font-size:0.82rem;color:var(--gris);font-style:italic;padding:6px 0;}
+.tag-pdte-reemb{display:inline-flex;align-items:center;gap:4px;background:#f5eafa;color:var(--morado);font-size:0.62rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:2px 8px;border-radius:10px;}
+
+/* ACTION BUTTONS */
+.action-bar{display:flex;gap:8px;align-items:center;margin-left:auto;}
+.btn-sol{background:var(--verde);color:white;border:none;border-radius:4px;padding:5px 12px;font-family:'Jost',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.15s;}
+.btn-sol:hover{background:var(--verde-o);}
+.btn-emit{background:var(--naranja);color:white;border:none;border-radius:4px;padding:5px 12px;font-family:'Jost',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.15s;}
+.btn-emit:hover{background:#a05515;}
+.btn-cob{background:var(--azul);color:white;border:none;border-radius:4px;padding:5px 12px;font-family:'Jost',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.15s;}
+.btn-cob:hover{background:#1d4066;}
+.btn-env{background:var(--gris);color:white;border:none;border-radius:4px;padding:5px 12px;font-family:'Jost',sans-serif;font-size:0.68rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.15s;}
+.btn-env:hover{background:#4a4a45;}
+
+/* SOLICITAR FACTURA banner en sección cobros */
+.solicitar-banner{display:flex;align-items:center;justify-content:space-between;background:#f0f7ea;border:1px dashed var(--verde-c);border-radius:6px;padding:10px 14px;margin-bottom:10px;}
+.solicitar-banner-txt{font-size:0.78rem;color:var(--verde-o);}
+
+/* PENDIENTES VIEW */
+.pend-header{margin-bottom:20px;}
+.pend-header h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--negro);}
+.pend-header p{font-size:0.8rem;color:var(--gris);margin-top:4px;}
+.pend-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.pend-section{background:white;border:1px solid var(--beige-o);border-radius:8px;overflow:hidden;}
+.pend-section.full{grid-column:1/-1;}
+.pend-sec-head{padding:12px 18px;border-bottom:1px solid var(--beige);display:flex;align-items:center;gap:10px;}
+.pend-sec-head.sol-h{background:#fff5ec;}
+.pend-sec-head.env-h{background:#f0f4ff;}
+.pend-sec-head.reemb-h{background:#f5eafa;}
+.pend-sec-title{font-size:0.73rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;flex:1;}
+.pend-sec-count{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gris);}
+.pend-item{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--beige);font-size:0.82rem;}
+.pend-item:last-child{border-bottom:none;}
+.pend-lote{font-weight:700;color:var(--negro);font-size:0.75rem;background:var(--beige);padding:2px 7px;border-radius:4px;white-space:nowrap;}
+.pend-info{min-width:0;}
+.pend-cliente{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pend-sub{font-size:0.7rem;color:var(--gris);margin-top:1px;}
+.pend-monto{font-family:'Cormorant Garamond',serif;font-size:1.15rem;text-align:right;white-space:nowrap;}
+.pend-empty{padding:20px 18px;font-size:0.82rem;color:var(--gris);font-style:italic;}
+
+/* LOGIN OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(26,26,24,0.92);z-index:1000;display:flex;align-items:center;justify-content:center;}
+.login-box{background:var(--crema);border-radius:12px;padding:40px 48px;max-width:480px;width:90%;text-align:center;}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;color:var(--verde-o);letter-spacing:0.04em;margin-bottom:4px;}
+.login-sub{font-size:0.7rem;color:var(--gris);letter-spacing:0.12em;text-transform:uppercase;font-weight:600;margin-bottom:28px;}
+.login-label{font-size:0.7rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gris);margin-bottom:10px;}
+.login-users{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px;}
+.login-btn{background:white;border:1px solid var(--beige-o);border-radius:6px;padding:10px 18px;font-family:'Jost',sans-serif;font-size:0.82rem;font-weight:500;color:var(--negro);cursor:pointer;transition:all 0.15s;}
+.login-btn:hover{border-color:var(--verde-c);background:var(--verde);color:white;}
+.login-btn.conta{background:var(--negro);color:white;border-color:var(--negro);}
+.login-btn.conta:hover{background:var(--verde-o);}
+.login-btn.dir{background:var(--verde-o);color:white;border-color:var(--verde-o);width:100%;}
+.login-btn.dir:hover{background:var(--verde);}
+.login-divider{border:none;border-top:1px solid var(--beige-o);margin:16px 0;}
+.login-pass-step{display:none;flex-direction:column;align-items:center;gap:14px;}
+.login-pass-step.active{display:flex;}
+.login-who{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:400;color:var(--verde-o);margin-bottom:2px;}
+.login-pass-input{width:100%;padding:10px 14px;border:1.5px solid var(--beige-o);border-radius:8px;font-family:'Jost',sans-serif;font-size:0.95rem;text-align:center;outline:none;box-sizing:border-box;}
+.login-pass-input:focus{border-color:var(--verde-c);}
+.login-err{color:#c0392b;font-size:0.75rem;min-height:16px;}
+
+/* MODALS */
+.modal-bg{position:fixed;inset:0;background:rgba(26,26,24,0.7);z-index:500;display:none;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:white;border-radius:10px;padding:28px 32px;max-width:440px;width:90%;max-height:90vh;overflow-y:auto;}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;margin-bottom:4px;color:var(--negro);}
+.modal .modal-sub{font-size:0.73rem;color:var(--gris);margin-bottom:20px;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gris);margin-bottom:5px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid var(--beige-o);border-radius:5px;padding:8px 10px;font-family:'Jost',sans-serif;font-size:0.85rem;color:var(--negro);background:var(--crema);outline:none;transition:border 0.15s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--verde-c);background:white;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--beige);}
+.btn-cancel{background:none;border:1px solid var(--beige-o);border-radius:4px;padding:8px 16px;font-family:'Jost',sans-serif;font-size:0.75rem;font-weight:600;color:var(--gris);cursor:pointer;}
+.btn-confirm{background:var(--verde);border:none;border-radius:4px;padding:8px 18px;font-family:'Jost',sans-serif;font-size:0.75rem;font-weight:600;color:white;cursor:pointer;letter-spacing:0.06em;}
+.btn-confirm:hover{background:var(--verde-o);}
+.btn-confirm.naranja{background:var(--naranja);}
+.btn-confirm.azul{background:var(--azul);}
+.modal-info{background:var(--crema);border-radius:6px;padding:10px 14px;font-size:0.78rem;color:var(--gris);margin-bottom:14px;}
+.modal-info strong{color:var(--negro);}
+
+/* ADMIN EDIT/DELETE */
+.btn-del{background:#fef2f2;border:1px solid #fca5a5;color:var(--rojo);border-radius:4px;padding:3px 7px;font-family:'Jost',sans-serif;font-size:0.65rem;font-weight:600;cursor:pointer;transition:all 0.15s;line-height:1.4;}
+.btn-del:hover{background:var(--rojo);color:white;border-color:var(--rojo);}
+.btn-edit{background:#f0f4ff;border:1px solid #93b4d4;color:var(--azul);border-radius:4px;padding:3px 7px;font-family:'Jost',sans-serif;font-size:0.65rem;font-weight:600;cursor:pointer;transition:all 0.15s;line-height:1.4;}
+.btn-edit:hover{background:var(--azul);color:white;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--negro);color:white;padding:10px 18px;border-radius:6px;font-size:0.78rem;font-weight:500;z-index:600;opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.ok{border-left:3px solid var(--verde);}
+.toast.err{border-left:3px solid var(--rojo);}
+
+@media(max-width:1000px){
+  header{padding:0 16px;} main{padding:20px 16px 40px;} .mnav{padding:0 16px;}
+  .kpi-grid{grid-template-columns:1fr;} .d-hero{grid-template-columns:1fr 1fr;}
+  .d-sections{grid-template-columns:1fr;} .pend-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="overlay" id="overlay-login">
+  <div class="login-box">
+    <div class="login-logo">ESM</div>
+    <div class="login-sub">Tracker Proyectos · Diseño</div>
+
+    <!-- Paso 1: selección de usuario -->
+    <div id="login-step1">
+      <div class="login-label">¿Quién eres?</div>
+      <div class="login-label" style="margin-bottom:6px">Arquitectos</div>
+      <div class="login-users">
+        <button class="login-btn" onclick="selectUser('Claudia','arquitecto')">Claudia</button>
+        <button class="login-btn" onclick="selectUser('Isolda','arquitecto')">Isolda</button>
+        <button class="login-btn" onclick="selectUser('Aníbal','arquitecto')">Aníbal</button>
+        <button class="login-btn" onclick="selectUser('Esteban','arquitecto')">Esteban</button>
+      </div>
+      <hr class="login-divider">
+      <div class="login-label" style="margin-bottom:6px">Administración</div>
+      <div class="login-users">
+        <button class="login-btn conta" onclick="selectUser('Luis','contabilidad')">Luis</button>
+        <button class="login-btn conta" onclick="selectUser('Krisna','contabilidad')">Krisna</button>
+        <button class="login-btn conta" onclick="selectUser('Proveeduría','proveeduria')">📦 Proveeduría</button>
+      </div>
+      <hr class="login-divider">
+      <div class="login-users">
+        <button class="login-btn dir" onclick="selectUser('Dirección','direccion')">👤 Dirección · Acceso completo</button>
+      </div>
+    </div>
+
+    <!-- Paso 2: contraseña -->
+    <div class="login-pass-step" id="login-step2">
+      <div class="login-who" id="login-who-name"></div>
+      <div class="login-label" style="margin-bottom:0">Introduce tu contraseña</div>
+      <input class="login-pass-input" type="password" id="login-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')tryLogin()">
+      <div class="login-err" id="login-err"></div>
+      <button class="login-btn" style="width:100%;background:var(--verde-o);color:white;border-color:var(--verde-o)" onclick="tryLogin()">Acceder</button>
+      <button onclick="backToUsers()" style="background:none;border:none;font-size:0.75rem;color:var(--gris);cursor:pointer;text-decoration:underline;margin-top:-4px">← Volver</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="lw">
+    <div class="hd" style="border:none;padding:0">
+      <h1>Tracker Proyectos · Diseño</h1>
+      <p>ESM Sustainable Solutions · Control contable</p>
+    </div>
+  </div>
+  <div class="user-area">
+    <span id="user-badge" class="user-badge" style="display:none"></span>
+    <button class="btn-logout" onclick="logout()" style="display:none" id="btn-logout">Cambiar usuario</button>
+  </div>
+</header>
+
+<nav class="mnav">
+  <button class="nb active" id="nb-resumen" onclick="showView('resumen',this)">📊 Resumen General</button>
+  <button class="nb" id="nb-pendientes" onclick="showView('pendientes',this)">⏳ Pendientes <span id="badge-count" class="badge-count" style="display:none">0</span></button>
+  <button class="nb" id="btn-det" style="display:none" onclick="showView('detail',this)">📁 Detalle</button>
+</nav>
+
+<main>
+  <div id="view-loading" style="display:block">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <div style="font-size:0.82rem;letter-spacing:0.1em;text-transform:uppercase;">Cargando...</div>
+    </div>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="view" id="view-resumen">
+    <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:12px">
+      <label style="font-size:0.7rem;color:var(--gris);font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Tipo de cambio CRC→USD</label>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:0.85rem;color:var(--gris)">$1 =</span>
+        <input type="number" id="tc-input" value="530" min="1" step="1" style="width:80px;padding:4px 8px;border:1px solid var(--beige-o);border-radius:6px;font-size:0.85rem;text-align:right" oninput="currentTC=Number(this.value)||530;buildKPIs(getList())">
+        <span style="font-size:0.85rem;color:var(--gris)">₡</span>
+      </div>
+    </div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="filters">
+      <button class="fb on" onclick="setF('todos',this)">Todos</button>
+      <button id="btn-nuevo-proy" style="display:none;margin-left:auto" class="btn-sol" onclick="openNuevoProyecto()">+ Nuevo proyecto</button>
+      <button class="fb" onclick="setF('Claudia',this)">Claudia</button>
+      <button class="fb" onclick="setF('Isolda',this)">Isolda</button>
+      <button class="fb" onclick="setF('Anibal',this)">Aníbal</button>
+      <button class="fb" onclick="setF('Esteban',this)">Esteban</button>
+      <button class="fb" onclick="setF('pdte_cobrar',this)">⚠️ Pdte. cobrar</button>
+      <button class="fb" onclick="setF('pdte_pagar',this)">🔵 Pdte. pagar proveed.</button>
+      <button class="fb" onclick="setF('pdte_reemb',this)">🟣 Reemb. sin refacturar</button>
+      <input class="sb" type="text" placeholder="🔍 Lote o cliente..." oninput="filterS(this.value)">
+    </div>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th>Lote</th><th>Cliente</th><th>Arq.</th><th>Contrato</th>
+            <th class="sep">Fee total</th><th>Cobrado</th><th>Pdte. cobrar</th><th>Pdte. facturar</th><th>% cobro</th>
+            <th class="sep">Coste proveed.</th><th>Pagado</th><th>Pdte. pagar</th><th>% pago</th>
+            <th class="sep">Reemb. pagado</th><th>Reemb. refacturado</th><th>Pdte. refacturar</th>
+            <th class="sep"></th>
+          </tr>
+        </thead>
+        <tbody id="tbl"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PENDIENTES -->
+  <div class="view" id="view-pendientes">
+    <div class="pend-header">
+      <h2>Tareas pendientes</h2>
+      <p id="pend-intro"></p>
+    </div>
+    <div class="pend-grid" id="pend-grid"></div>
+  </div>
+
+  <!-- DETALLE -->
+  <div class="view" id="view-detail">
+    <button class="back-btn" onclick="goBack()">← Volver al resumen</button>
+    <div id="det"></div>
+  </div>
+</main>
+
+<!-- MODAL: Solicitar factura -->
+<div class="modal-bg" id="modal-solicitar">
+  <div class="modal">
+    <h3>Solicitar factura</h3>
+    <p class="modal-sub" id="modal-sol-sub"></p>
+    <div class="modal-info" id="modal-sol-info"></div>
+    <form id="form-solicitar" onsubmit="submitSolicitud(event)">
+      <div class="form-group">
+        <label>Hito a facturar</label>
+        <select id="sol-hito" required onchange="updateMontoSugerido()">
+          <option value="">— Selecciona —</option>
+          <option value="1">Hito 1 · Firma del contrato (30%)</option>
+          <option value="2">Hito 2 · Aprobación anteproyecto (35%)</option>
+          <option value="3">Hito 3 · Entrega documentos constructivos (35%)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monto a facturar (USD)</label>
+          <input type="number" id="sol-monto" step="0.01" min="0" required placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Monto sugerido</label>
+          <input type="text" id="sol-sugerido" readonly style="color:var(--verde);font-weight:500;">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notas (opcional)</label>
+        <textarea id="sol-notas" rows="2" placeholder="Observaciones para contabilidad..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-solicitar')">Cancelar</button>
+        <button type="submit" class="btn-confirm">Enviar solicitud</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Emitir factura (contabilidad) -->
+<div class="modal-bg" id="modal-emitir">
+  <div class="modal">
+    <h3>Registrar factura emitida</h3>
+    <p class="modal-sub" id="modal-emit-sub"></p>
+    <div class="modal-info" id="modal-emit-info"></div>
+    <form id="form-emitir" onsubmit="submitEmitir(event)">
+      <div class="form-group">
+        <label>Número de factura</label>
+        <input type="text" id="emit-num" required placeholder="DS25XXX / 1XXX">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monto facturado (USD)</label>
+          <input type="number" id="emit-monto" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>Estado inicial</label>
+          <select id="emit-estado">
+            <option value="Emitida">Emitida (pendiente envío)</option>
+            <option value="Enviada">Enviada al cliente</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-emitir')">Cancelar</button>
+        <button type="submit" class="btn-confirm naranja">Registrar factura</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Añadir factura existente (contabilidad) -->
+<div class="modal-bg" id="modal-add-factura">
+  <div class="modal">
+    <h3>Registrar factura existente</h3>
+    <p class="modal-sub" id="modal-addfac-sub"></p>
+    <div class="modal-info">Usa esto para añadir facturas que ya fueron emitidas pero no están registradas en la app.</div>
+    <form id="form-add-factura" onsubmit="submitAddFactura(event)">
+      <div class="form-group">
+        <label>Hito</label>
+        <select id="addfac-hito" required>
+          <option value="">— Selecciona —</option>
+          <option value="1">Hito 1 · Firma del contrato (30%)</option>
+          <option value="2">Hito 2 · Aprobación anteproyecto (35%)</option>
+          <option value="3">Hito 3 · Entrega documentos constructivos (35%)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Número de factura</label>
+          <input type="text" id="addfac-num" required placeholder="DS25XXX / 1XXX">
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="addfac-estado">
+            <option value="Emitida">Emitida</option>
+            <option value="Enviada">Enviada al cliente</option>
+            <option value="Pago">Cobrada (Pago)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monto facturado (USD)</label>
+          <input type="number" id="addfac-monto" step="0.01" min="0" required placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Cobrado (USD)</label>
+          <input type="number" id="addfac-cobrado" step="0.01" min="0" placeholder="0.00" value="0">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-add-factura')">Cancelar</button>
+        <button type="submit" class="btn-confirm naranja">Registrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Registrar cobro (contabilidad) -->
+<div class="modal-bg" id="modal-cobro">
+  <div class="modal">
+    <h3>Registrar cobro</h3>
+    <p class="modal-sub" id="modal-cob-sub"></p>
+    <div class="modal-info" id="modal-cob-info"></div>
+    <form id="form-cobro" onsubmit="submitCobro(event)">
+      <div class="form-group">
+        <label>Importe cobrado (USD)</label>
+        <input type="number" id="cob-importe" step="0.01" min="0" required placeholder="0.00">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-cobro')">Cancelar</button>
+        <button type="submit" class="btn-confirm azul">Confirmar cobro</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Añadir reembolsable -->
+<div class="modal-bg" id="modal-reemb">
+  <div class="modal">
+    <h3>Añadir gasto reembolsable</h3>
+    <p class="modal-sub" id="modal-reemb-sub"></p>
+    <form id="form-reemb" onsubmit="submitReemb(event)">
+      <div class="form-group">
+        <label>Concepto</label>
+        <input type="text" id="reemb-concepto" required placeholder="Estudio de suelos / Permisos...">
+      </div>
+      <div class="form-group">
+        <label>Proveedor</label>
+        <input type="text" id="reemb-prov" required placeholder="GEOCONSTR. / Municipalidad...">
+      </div>
+      <div class="form-group">
+        <label>Moneda</label>
+        <select id="reemb-moneda">
+          <option value="USD">USD – Dólares ($)</option>
+          <option value="CRC">CRC – Colones (₡)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Coste total</label>
+          <input type="number" id="reemb-coste" step="0.01" min="0" required placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Ya pagado</label>
+          <input type="number" id="reemb-pagado" step="0.01" min="0" required placeholder="0.00">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-reemb')">Cancelar</button>
+        <button type="submit" class="btn-confirm">Añadir</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Nuevo proyecto -->
+<div class="modal-bg" id="modal-nuevo-proyecto">
+  <div class="modal">
+    <h3>Nuevo proyecto</h3>
+    <p class="modal-sub">Rellena los datos base. Podrás añadir facturas, costes y reembolsables después.</p>
+    <form id="form-nuevo-proyecto" onsubmit="submitNuevoProyecto(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Lote / Código del proyecto</label>
+          <input type="text" id="nuevo-lote" required placeholder="Ej: B220, F618…" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label>Estado del contrato</label>
+          <select id="nuevo-estado">
+            <option value="Creado">Creado</option>
+            <option value="Firmado">Firmado</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Cliente</label>
+        <input type="text" id="nuevo-cliente" required placeholder="Nombre del cliente">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Arquitecta responsable</label>
+          <select id="nuevo-arq">
+            <option value="Claudia">Claudia</option>
+            <option value="Isolda">Isolda</option>
+            <option value="Anibal">Aníbal</option>
+            <option value="Esteban">Esteban</option>
+            <option value="—">— Sin asignar</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Superficie (m²)</label>
+          <input type="number" id="nuevo-m2" min="0" step="1" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Fee total acordado (USD)</label>
+        <input type="number" id="nuevo-fee" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-nuevo-proyecto')">Cancelar</button>
+        <button type="submit" class="btn-confirm">Crear proyecto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar proyecto (Krisna/Dirección) -->
+<div class="modal-bg" id="modal-edit-proyecto">
+  <div class="modal">
+    <h3>Editar proyecto</h3>
+    <p class="modal-sub" id="modal-editproy-sub"></p>
+    <form id="form-edit-proyecto" onsubmit="submitEditProyecto(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cliente</label>
+          <input type="text" id="editproy-cliente" required>
+        </div>
+        <div class="form-group">
+          <label>Arquitecta responsable</label>
+          <select id="editproy-arq">
+            <option value="Claudia">Claudia</option>
+            <option value="Isolda">Isolda</option>
+            <option value="Anibal">Aníbal</option>
+            <option value="Esteban">Esteban</option>
+            <option value="—">— Sin asignar</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Estado del contrato</label>
+          <select id="editproy-estado">
+            <option value="Firmado">Firmado</option>
+            <option value="Creado">Creado</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Superficie (m²)</label>
+          <input type="number" id="editproy-m2" min="0" step="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Fee total (USD)</label>
+        <input type="number" id="editproy-fee" step="0.01" min="0">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-edit-proyecto')">Cancelar</button>
+        <button type="submit" class="btn-confirm">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar factura (Krisna/Dirección) -->
+<div class="modal-bg" id="modal-edit-factura">
+  <div class="modal">
+    <h3>Editar factura</h3>
+    <p class="modal-sub" id="modal-editfac-sub"></p>
+    <form id="form-edit-factura" onsubmit="submitEditFactura(event)">
+      <div class="form-group">
+        <label>Descripción / Hito</label>
+        <input type="text" id="editfac-desc" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nº Factura</label>
+          <input type="text" id="editfac-num" placeholder="DS25XXX / 1XXX">
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="editfac-estado">
+            <option value="Solicitada">Solicitada</option>
+            <option value="Emitida">Emitida</option>
+            <option value="Enviada">Enviada</option>
+            <option value="Pago">Pago (Cobrada)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monto facturado (USD)</label>
+          <input type="number" id="editfac-monto" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>Cobrado (USD)</label>
+          <input type="number" id="editfac-cobrado" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-edit-factura')">Cancelar</button>
+        <button type="submit" class="btn-confirm">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar coste (Krisna/Dirección) -->
+<div class="modal-bg" id="modal-edit-coste">
+  <div class="modal">
+    <h3>Editar coste de servicio</h3>
+    <p class="modal-sub" id="modal-editcost-sub"></p>
+    <form id="form-edit-coste" onsubmit="submitEditCoste(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de servicio</label>
+          <input type="text" id="editcost-tipo" required>
+        </div>
+        <div class="form-group">
+          <label>Proveedor</label>
+          <input type="text" id="editcost-prov" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Moneda</label>
+        <select id="editcost-moneda">
+          <option value="USD">USD – Dólares ($)</option>
+          <option value="CRC">CRC – Colones (₡)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Coste total</label>
+          <input type="number" id="editcost-coste" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>Pagado</label>
+          <input type="number" id="editcost-pagado" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-edit-coste')">Cancelar</button>
+        <button type="submit" class="btn-confirm">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Editar reembolsable (Krisna/Dirección) -->
+<div class="modal-bg" id="modal-edit-reemb">
+  <div class="modal">
+    <h3>Editar gasto reembolsable</h3>
+    <p class="modal-sub" id="modal-editreemb-sub"></p>
+    <form id="form-edit-reemb" onsubmit="submitEditReemb(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Concepto</label>
+          <input type="text" id="editreemb-concepto" required>
+        </div>
+        <div class="form-group">
+          <label>Proveedor</label>
+          <input type="text" id="editreemb-prov" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Moneda</label>
+        <select id="editreemb-moneda">
+          <option value="USD">USD – Dólares ($)</option>
+          <option value="CRC">CRC – Colones (₡)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Coste total</label>
+          <input type="number" id="editreemb-coste" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>Pagado proveedor</label>
+          <input type="number" id="editreemb-pagado" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nº factura OS</label>
+          <input type="text" id="editreemb-os" placeholder="DS25XXX">
+        </div>
+        <div class="form-group">
+          <label>Cobrado del cliente</label>
+          <input type="number" id="editreemb-cobrado-cliente" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="editreemb-ref" style="width:16px;height:16px;accent-color:var(--morado)">
+          Refacturado al cliente
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-edit-reemb')">Cancelar</button>
+        <button type="submit" class="btn-confirm">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Solicitar pago a proveedor (arquitectas) -->
+<div class="modal-bg" id="modal-solicitar-pago">
+  <div class="modal">
+    <h3>Solicitar pago a proveedor</h3>
+    <p class="modal-sub" id="modal-solpago-sub"></p>
+    <div class="modal-info" id="modal-solpago-info"></div>
+    <form id="form-solicitar-pago" onsubmit="submitSolicitarPago(event)">
+      <div class="form-group">
+        <label>Importe a solicitar (USD)</label>
+        <input type="number" id="solpago-monto" step="0.01" min="0.01" required placeholder="0.00">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-solicitar-pago')">Cancelar</button>
+        <button type="submit" class="btn-confirm" style="background:var(--azul)">Solicitar pago</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Añadir coste de servicio -->
+<div class="modal-bg" id="modal-add-coste">
+  <div class="modal">
+    <h3>Añadir coste de servicio</h3>
+    <p class="modal-sub" id="modal-addcoste-sub"></p>
+    <div class="modal-info">Costes incluidos en el servicio: arquitectos colaboradores, ingenieros, renders, etc.</div>
+    <form id="form-add-coste" onsubmit="submitAddCoste(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de servicio</label>
+          <input type="text" id="addcoste-tipo" required placeholder="Arquitectos / Ing. Estructural...">
+        </div>
+        <div class="form-group">
+          <label>Proveedor</label>
+          <input type="text" id="addcoste-prov" required placeholder="HDI / Be-Archs / ZAMORA...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Moneda</label>
+        <select id="addcoste-moneda">
+          <option value="USD">USD – Dólares ($)</option>
+          <option value="CRC">CRC – Colones (₡)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Coste total</label>
+          <input type="number" id="addcoste-coste" step="0.01" min="0" required placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Ya pagado</label>
+          <input type="number" id="addcoste-pagado" step="0.01" min="0" placeholder="0.00" value="0">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-add-coste')">Cancelar</button>
+        <button type="submit" class="btn-confirm">Añadir coste</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Factura extra (concepto libre) -->
+<div class="modal-bg" id="modal-factura-extra">
+  <div class="modal">
+    <h3>Solicitar factura adicional</h3>
+    <p class="modal-sub" id="modal-fex-sub"></p>
+    <div class="modal-info">Para conceptos fuera de los 3 hitos estándar: adicionales de diseño, modificaciones, servicios extra, etc.</div>
+    <form id="form-factura-extra" onsubmit="submitFacturaExtra(event)">
+      <div class="form-group">
+        <label>Concepto</label>
+        <input type="text" id="fex-concepto" required placeholder="Adicional diseño / Modificación / ...">
+      </div>
+      <div class="form-group">
+        <label>Monto a facturar (USD)</label>
+        <input type="number" id="fex-monto" step="0.01" min="0" required placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Notas (opcional)</label>
+        <textarea id="fex-notas" rows="2" placeholder="Detalle adicional para contabilidad..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal('modal-factura-extra')">Cancelar</button>
+        <button type="submit" class="btn-confirm">Solicitar factura</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const SUPA_URL = 'https://cojwqknwplirxwgaraqy.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvandxa253cGxpcnh3Z2FyYXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTAzMzAsImV4cCI6MjA5MzU2NjMzMH0.TFGr-UtcoY06BowV0aR9AnKrex3VXOttqddKCRGHwpU';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── ESTADO GLOBAL ──
+let currentUser = null;
+let P = [], FACTURAS = {}, COSTES_MAP = {}, REEMB_MAP = {};
+let currentTC = 530;
+let _pendingUser = null;
+
+// ── CONTRASEÑAS (cambiar aquí) ──
+const USERS = [
+  {name:'Claudia',     role:'arquitecto',   pass:'Planos#47'},
+  {name:'Isolda',      role:'arquitecto',   pass:'Terraz@81'},
+  {name:'Aníbal',      role:'arquitecto',   pass:'Fachad!3'},
+  {name:'Esteban',     role:'arquitecto',   pass:'Croquis$9'},
+  {name:'Luis',        role:'contabilidad', pass:'Factur@55'},
+  {name:'Krisna',      role:'contabilidad', pass:'Ledger!2k'},
+  {name:'Proveeduría', role:'proveeduria',  pass:'Almacen#6'},
+  {name:'Dirección',   role:'direccion',    pass:'ESMdir@99'},
+];
+let curF = 'todos', curS = '', currentLote = null;
+let modalData = {}; // datos del modal activo
+
+// ── PERMISOS ──
+// arquitecto: solicitar facturas para sus proyectos
+// contabilidad: emitir facturas, registrar cobros
+// proveeduria: gestionar reembolsables y costes
+// direccion: acceso completo
+function can(accion) {
+  const r = currentUser?.role;
+  if (r === 'direccion') return true;
+  if (accion === 'solicitar')   return r === 'arquitecto';
+  if (accion === 'add_factura') return r === 'contabilidad';
+  if (accion === 'emitir')      return r === 'contabilidad';
+  if (accion === 'cobrar')      return r === 'contabilidad';
+  if (accion === 'reemb_edit')  return r === 'contabilidad' || r === 'proveeduria';
+  if (accion === 'add_reemb')   return r === 'arquitecto' || r === 'contabilidad' || r === 'proveeduria';
+  if (accion === 'coste_edit')  return r === 'contabilidad' || r === 'proveeduria';
+  if (accion === 'add_coste')   return r === 'arquitecto' || r === 'contabilidad' || r === 'proveeduria';
+  if (accion === 'factura_extra') return r === 'arquitecto';
+  if (accion === 'solicitar_pago_prov') return r === 'arquitecto';
+  if (accion === 'solicitar_refact')    return r === 'arquitecto';
+  if (accion === 'editar') return currentUser?.name === 'Krisna' || r === 'direccion';
+  if (accion === 'crear_proyecto') return r === 'arquitecto' || r === 'contabilidad' || r === 'direccion';
+  return false;
+}
+
+// ── UTILS ──
+const $id = id => document.getElementById(id);
+const usd = v => v > 0.009 ? '$' + Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+const fmtMonto = (v, moneda) => {
+  if(!v || Number(v) < 0.009) return '—';
+  const num = Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return (moneda==='CRC' ? '₡' : '$') + num;
+};
+const monedaTag = m => m==='CRC'
+  ? `<span style="font-size:0.6rem;font-weight:700;background:#fff3cd;color:#7a5a00;padding:1px 5px;border-radius:4px;margin-left:4px">₡ CRC</span>`
+  : `<span style="font-size:0.6rem;font-weight:700;background:#e8f4ff;color:var(--azul);padding:1px 5px;border-radius:4px;margin-left:4px">$ USD</span>`;
+const pct = (a,b) => b > 0 ? Math.round(a/b*100) : 0;
+const fmt_date = ts => ts ? new Date(ts).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '';
+
+function projTotals(lote) {
+  const costes = COSTES_MAP[lote] || [];
+  const reembs = REEMB_MAP[lote] || [];
+  const tc = currentTC || 530;
+  const isUSD = x => (x.moneda||'USD') === 'USD';
+  const isCRC = x => x.moneda === 'CRC';
+  const c_coste_usd = costes.filter(isUSD).reduce((s,x)=>s+Number(x.coste),0);
+  const c_pag_usd   = costes.filter(isUSD).reduce((s,x)=>s+Number(x.pagado),0);
+  const c_coste_crc = costes.filter(isCRC).reduce((s,x)=>s+Number(x.coste),0);
+  const c_pag_crc   = costes.filter(isCRC).reduce((s,x)=>s+Number(x.pagado),0);
+  const r_pag_usd   = reembs.filter(isUSD).reduce((s,x)=>s+Number(x.pagado),0);
+  const r_pag_crc   = reembs.filter(isCRC).reduce((s,x)=>s+Number(x.pagado),0);
+  const r_ref_usd   = reembs.filter(x=>x.ref&&isUSD(x)).reduce((s,x)=>s+Number(x.pagado),0);
+  const r_ref_crc   = reembs.filter(x=>x.ref&&isCRC(x)).reduce((s,x)=>s+Number(x.pagado),0);
+  const r_cob_usd   = reembs.filter(isUSD).reduce((s,x)=>s+Number(x.cobrado_cliente||0),0);
+  const r_cob_crc   = reembs.filter(isCRC).reduce((s,x)=>s+Number(x.cobrado_cliente||0),0);
+  // TC-aware combined (CRC converted to USD) for summary table / KPIs
+  const c_coste = c_coste_usd + c_coste_crc/tc;
+  const c_pag   = c_pag_usd   + c_pag_crc/tc;
+  const r_pag   = r_pag_usd   + r_pag_crc/tc;
+  const r_ref   = r_ref_usd   + r_ref_crc/tc;
+  const r_cobrado_cliente = r_cob_usd + r_cob_crc/tc;
+  return {
+    c_coste_usd, c_pag_usd, c_pdte_usd: c_coste_usd-c_pag_usd,
+    c_coste_crc, c_pag_crc, c_pdte_crc: c_coste_crc-c_pag_crc,
+    r_pag_usd, r_pag_crc, r_ref_usd, r_ref_crc, r_cob_usd, r_cob_crc,
+    r_pdte_usd: r_pag_usd-r_ref_usd, r_pdte_crc: r_pag_crc-r_ref_crc,
+    c_coste, c_pag, c_pdte: c_coste-c_pag,
+    r_pag, r_ref, r_pdte: r_pag-r_ref, r_cobrado_cliente
+  };
+}
+
+function canActOnProject(lote) {
+  if (currentUser?.role !== 'arquitecto') return true;
+  const p = P.find(x => x.lote === lote);
+  return p?.arq === currentUser?.name;
+}
+
+// ── LOGIN ──
+function selectUser(name, role) {
+  _pendingUser = {name, role};
+  $id('login-step1').style.display = 'none';
+  $id('login-step2').classList.add('active');
+  $id('login-who-name').textContent = name;
+  $id('login-pass').value = '';
+  $id('login-err').textContent = '';
+  setTimeout(() => $id('login-pass').focus(), 50);
+}
+
+function backToUsers() {
+  _pendingUser = null;
+  $id('login-step2').classList.remove('active');
+  $id('login-step1').style.display = '';
+}
+
+function tryLogin() {
+  if (!_pendingUser) return;
+  const entered = $id('login-pass').value;
+  const user = USERS.find(u => u.name === _pendingUser.name);
+  if (!user || entered !== user.pass) {
+    $id('login-err').textContent = 'Contraseña incorrecta.';
+    $id('login-pass').value = '';
+    $id('login-pass').focus();
+    return;
+  }
+  login(_pendingUser.name, _pendingUser.role);
+}
+
+function login(name, role) {
+  currentUser = {name, role};
+  localStorage.setItem('esm_user', JSON.stringify(currentUser));
+  applyLogin();
+  loadAll();
+}
+
+function applyLogin() {
+  $id('overlay-login').style.display = 'none';
+  $id('user-badge').style.display = '';
+  const roleLabel = {arquitecto:'Arquitecto', contabilidad:'Contabilidad', proveeduria:'Proveeduría', direccion:'Dirección'}[currentUser.role] || currentUser.role;
+  $id('user-badge').innerHTML = currentUser.name + '<span class="user-role">' + roleLabel + '</span>';
+  $id('btn-logout').style.display = '';
+  if(can('crear_proyecto')) $id('btn-nuevo-proy').style.display = '';
+}
+
+function logout() {
+  localStorage.removeItem('esm_user');
+  location.reload();
+}
+
+// ── CARGA DE DATOS ──
+async function loadAll() {
+  $id('view-loading').style.display = 'block';
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
+  const [r1, r2, r3, r4] = await Promise.all([
+    sb.from('proyectos').select('*').order('lote'),
+    sb.from('facturas').select('*').order('hito'),
+    sb.from('costes').select('*'),
+    sb.from('reembolsables').select('*')
+  ]);
+
+  if (r1.error) { showToast('Error cargando datos: ' + r1.error.message, 'err'); return; }
+
+  // mapas
+  FACTURAS = {};
+  (r2.data||[]).forEach(f => { if(!FACTURAS[f.lote]) FACTURAS[f.lote]=[]; FACTURAS[f.lote].push(f); });
+  COSTES_MAP = {};
+  (r3.data||[]).forEach(c => { if(!COSTES_MAP[c.lote]) COSTES_MAP[c.lote]=[]; COSTES_MAP[c.lote].push(c); });
+  REEMB_MAP = {};
+  (r4.data||[]).forEach(r => { if(!REEMB_MAP[r.lote]) REEMB_MAP[r.lote]=[]; REEMB_MAP[r.lote].push(r); });
+
+  // proyectos con totales derivados
+  P = (r1.data||[]).map(p => {
+    const facs = FACTURAS[p.lote] || [];
+    const facturado = facs.reduce((s,f) => s+Number(f.monto), 0);
+    const cobrado   = facs.reduce((s,f) => s+Number(f.cobrado), 0);
+    return {...p, facturado, cobrado, pdte_fac: Number(p.fee)-facturado};
+  });
+
+  $id('view-loading').style.display = 'none';
+  buildTable(getList());
+  buildPendientes();
+  updateBadge();
+
+  // si había un proyecto abierto, refrescarlo
+  const activo = document.querySelector('.nb.active');
+  if (currentLote && activo && activo.id === 'btn-det') {
+    openP(currentLote);
+  } else {
+    showView('resumen', $id('nb-resumen'));
+  }
+}
+
+// ── KPIs ──
+function buildKPIs(list) {
+  let fee=0, cob=0, pdte_cob=0, pdte_fac=0, c_coste=0, c_pag=0, r_pag=0, r_ref=0, r_cobrado_cliente=0;
+  list.forEach(p => {
+    fee+=Number(p.fee); cob+=Number(p.cobrado);
+    pdte_cob+=Math.max(0,Number(p.facturado)-Number(p.cobrado));
+    pdte_fac+=Number(p.pdte_fac);
+    const t=projTotals(p.lote);
+    c_coste+=t.c_coste; c_pag+=t.c_pag; r_pag+=t.r_pag; r_ref+=t.r_ref; r_cobrado_cliente+=t.r_cobrado_cliente;
+  });
+  $id('kpi-grid').innerHTML=`
+    <div class="kpi-section">
+      <div class="kpi-section-head cobros">🧾 Cobros a clientes</div>
+      <div class="kpi-section-body">
+        <div class="kpi"><div class="kpi-n cn-verde">${usd(cob)}</div><div class="kpi-l">Cobrado</div></div>
+        <div class="kpi"><div class="kpi-n cn-naranja">${usd(pdte_cob)}</div><div class="kpi-l">Facturado pdte. cobrar</div></div>
+        <div class="kpi"><div class="kpi-n cn-rojo">${usd(pdte_fac)}</div><div class="kpi-l">Pdte. facturar</div></div>
+      </div>
+    </div>
+    <div class="kpi-section">
+      <div class="kpi-section-head costes">🔵 Costes de servicio (no reemb.)</div>
+      <div class="kpi-section-body">
+        <div class="kpi"><div class="kpi-n">${usd(c_coste)}</div><div class="kpi-l">Coste total</div></div>
+        <div class="kpi"><div class="kpi-n cn-azul">${usd(c_pag)}</div><div class="kpi-l">Pagado a proveed.</div></div>
+        <div class="kpi"><div class="kpi-n cn-naranja">${usd(c_coste-c_pag)}</div><div class="kpi-l">Pdte. pagar</div></div>
+      </div>
+      <div style="padding:6px 14px 8px;font-size:0.6rem;color:var(--gris);border-top:1px solid var(--beige-o)">CRC convertido a USD · TC ₡${currentTC}/$1</div>
+    </div>
+    <div class="kpi-section">
+      <div class="kpi-section-head reemb">🟣 Gastos reembolsables</div>
+      <div class="kpi-section-body">
+        <div class="kpi"><div class="kpi-n cn-azul">${usd(r_pag)}</div><div class="kpi-l">Pagado a proveedor</div></div>
+        <div class="kpi"><div class="kpi-n cn-naranja">${usd(r_pag-r_ref)}</div><div class="kpi-l">Pdte. refacturar</div></div>
+        <div class="kpi"><div class="kpi-n cn-verde">${usd(r_cobrado_cliente)}</div><div class="kpi-l">Cobrado del cliente</div></div>
+      </div>
+      <div style="padding:6px 14px 8px;font-size:0.6rem;color:var(--gris);border-top:1px solid var(--beige-o)">CRC convertido a USD · TC ₡${currentTC}/$1</div>
+    </div>`;
+}
+
+// ── TABLA RESUMEN ──
+function getList() {
+  return P.filter(p => {
+    const t = projTotals(p.lote);
+    const mF = curF==='todos' ? true
+      : curF==='pdte_cobrar' ? (Number(p.facturado)-Number(p.cobrado))>1
+      : curF==='pdte_pagar'  ? t.c_pdte>0.5
+      : curF==='pdte_reemb'  ? t.r_pdte>0.5
+      : p.arq===curF || p.arq==='Aníbal'&&curF==='Anibal';
+    const q = curS.toLowerCase();
+    return mF && (!q || p.lote.toLowerCase().includes(q) || p.cliente.toLowerCase().includes(q));
+  });
+}
+
+function buildTable(list) {
+  buildKPIs(list);
+  const body = $id('tbl');
+  if(!list.length){body.innerHTML='<tr><td colspan="17" style="padding:24px;text-align:center;color:var(--gris);font-style:italic">Sin proyectos</td></tr>';return;}
+  body.innerHTML = list.map(p => {
+    const t = projTotals(p.lote);
+    const pc=pct(Number(p.cobrado),Number(p.fee));
+    const pp=pct(t.c_pag,t.c_coste);
+    const pdte_cob=Math.max(0,Number(p.facturado)-Number(p.cobrado));
+    const pdte_reemb=t.r_pdte;
+    const est=p.estado||'';
+    return `<tr onclick="openP('${p.lote}')">
+      <td><div class="tl">${p.lote}</div></td>
+      <td><div>${p.cliente}</div></td>
+      <td><div class="tg">${p.arq}</div></td>
+      <td><span class="be e${est.toLowerCase().slice(0,1)}">${est}</span></td>
+      <td class="sep"><div class="tn">${Number(p.fee)>0?usd(p.fee):'—'}</div></td>
+      <td><div class="tn v">${Number(p.cobrado)>0?usd(p.cobrado):'—'}</div></td>
+      <td><div class="tn ${pdte_cob>0?'n':''}">${pdte_cob>0?usd(pdte_cob):'—'}</div></td>
+      <td><div class="tn ${Number(p.pdte_fac)>0?'r':''}">${Number(p.pdte_fac)>0?usd(p.pdte_fac):'—'}</div></td>
+      <td><div class="pb"><div class="pb-bg"><div class="pb-f cobros" style="width:${pc}%"></div></div><div class="pb-t">${pc}%</div></div></td>
+      <td class="sep"><div class="tn">${t.c_coste>0?usd(t.c_coste):'—'}</div></td>
+      <td><div class="tn a">${t.c_pag>0?usd(t.c_pag):'—'}</div></td>
+      <td><div class="tn ${t.c_pdte>0?'n':''}">${t.c_pdte>0?usd(t.c_pdte):'—'}</div></td>
+      <td><div class="pb"><div class="pb-bg"><div class="pb-f costes" style="width:${pp}%"></div></div><div class="pb-t">${pp}%</div></div></td>
+      <td class="sep"><div class="tn a">${t.r_pag>0?usd(t.r_pag):'—'}</div></td>
+      <td><div class="tn v">${t.r_ref>0?usd(t.r_ref):'—'}</div></td>
+      <td><div class="tn ${pdte_reemb>0?'m':''}">${pdte_reemb>0?usd(pdte_reemb)+'<span class="alert-dot"></span>':'—'}</div></td>
+      <td class="sep"><button class="btn-v" onclick="event.stopPropagation();openP('${p.lote}')">Ver →</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function setF(f,btn){curF=f;document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');buildTable(getList());}
+function filterS(q){curS=q;buildTable(getList());}
+
+// ── PENDIENTES ──
+function buildPendientes() {
+
+  // Facturas solicitadas pendientes de emitir
+  const solicitadas = [];
+  P.forEach(p => {
+    (FACTURAS[p.lote]||[]).filter(f=>f.estado==='Solicitada').forEach(f => {
+      solicitadas.push({p, f});
+    });
+  });
+
+  // Facturas enviadas pendientes de cobro
+  const enviadas = [];
+  P.forEach(p => {
+    (FACTURAS[p.lote]||[]).filter(f=>f.estado==='Enviada'||f.estado==='Emitida').forEach(f => {
+      enviadas.push({p, f});
+    });
+  });
+
+  // Reembolsables sin refacturar
+  const reembPdte = [];
+  P.forEach(p => {
+    (REEMB_MAP[p.lote]||[]).filter(r=>!r.ref&&Number(r.pagado)>0).forEach(r => {
+      reembPdte.push({p, r});
+    });
+  });
+
+  // Pagos a proveedor solicitados por arquitectas (para Proveeduría) — costes y reembolsables
+  const pagosSolicitados = [];
+  P.forEach(p => {
+    (COSTES_MAP[p.lote]||[]).filter(x=>x.pago_solicitado).forEach(x => {
+      pagosSolicitados.push({p, item: x, tipo: 'coste'});
+    });
+    (REEMB_MAP[p.lote]||[]).filter(r=>r.pago_solicitado).forEach(r => {
+      pagosSolicitados.push({p, item: r, tipo: 'reemb'});
+    });
+  });
+
+  // Refacturaciones al cliente solicitadas (para Contabilidad)
+  const refactSolicitadas = [];
+  P.forEach(p => {
+    (REEMB_MAP[p.lote]||[]).filter(r=>r.refact_solicitado&&!r.ref).forEach(r => {
+      refactSolicitadas.push({p, r});
+    });
+  });
+
+  const total = solicitadas.length + enviadas.length + reembPdte.length + pagosSolicitados.length + refactSolicitadas.length;
+  $id('pend-intro').textContent = total === 0
+    ? 'Todo al día. No hay tareas pendientes.'
+    : `Hay ${total} elemento${total>1?'s':''} que requieren atención.`;
+
+  const renderSol = solicitadas.length ? solicitadas.map(({p,f}) => `
+    <div class="pend-item">
+      <div class="pend-lote">${p.lote}</div>
+      <div class="pend-info">
+        <div class="pend-cliente">${p.cliente}</div>
+        <div class="pend-sub">Hito ${f.hito||'+'} · ${f.hito_desc} · Solicitado por: ${f.solicitado_por} · ${fmt_date(f.solicitado_at)}</div>
+      </div>
+      <div class="pend-monto">${usd(f.monto)}</div>
+      ${can('emitir') ? `<button class="btn-emit" onclick="openEmitir(${f.id},'${p.lote}','${p.cliente}',${f.monto})">Emitir factura</button>` : ''}
+      ${can('editar') ? `<button class="btn-del" onclick="cancelarSolicitudFactura(${f.id})">✕ Cancelar</button>` : ''}
+    </div>`).join('') : '<div class="pend-empty">Sin solicitudes pendientes</div>';
+
+  const renderEnv = enviadas.length ? enviadas.map(({p,f}) => `
+    <div class="pend-item">
+      <div class="pend-lote">${p.lote}</div>
+      <div class="pend-info">
+        <div class="pend-cliente">${p.cliente}</div>
+        <div class="pend-sub">Factura ${f.num} · ${f.hito_desc} · ${f.estado}</div>
+      </div>
+      <div class="pend-monto">${usd(f.monto)}</div>
+      ${can('cobrar') ? `<button class="btn-cob" onclick="openCobro(${f.id},'${p.lote}','${p.cliente}',${f.monto},'${f.num}')">Registrar cobro</button>` : ''}
+    </div>`).join('') : '<div class="pend-empty">Sin facturas pendientes de cobro</div>';
+
+  const renderReemb = reembPdte.length ? reembPdte.map(({p,r}) => `
+    <div class="pend-item">
+      <div class="pend-lote">${p.lote}</div>
+      <div class="pend-info">
+        <div class="pend-cliente">${p.cliente}</div>
+        <div class="pend-sub">${r.concepto} · ${r.prov}</div>
+      </div>
+      <div class="pend-monto">${usd(r.pagado)}</div>
+      <button class="btn-v" onclick="openP('${p.lote}')">Ver proyecto</button>
+    </div>`).join('') : '<div class="pend-empty">Sin reembolsables pendientes de refacturar</div>';
+
+  const renderPagosSol = pagosSolicitados.length ? pagosSolicitados.map(({p, item, tipo}) => {
+    const label = tipo === 'coste' ? item.tipo : item.concepto;
+    const montoSol = Number(item.monto_solicitado||0);
+    const pdte = Number(item.coste) - Number(item.pagado);
+    const montoMostrar = montoSol > 0 ? montoSol : pdte;
+    return `<div class="pend-item">
+      <div class="pend-lote">${p.lote}</div>
+      <div class="pend-info">
+        <div class="pend-cliente">${p.cliente}</div>
+        <div class="pend-sub">${label} · ${item.prov} · ${tipo==='coste'?'Coste de servicio':'Reembolsable'}</div>
+      </div>
+      <div class="pend-monto">${usd(montoMostrar)}</div>
+      <button class="btn-v" onclick="openP('${p.lote}')">Ver →</button>
+      ${can('editar') ? `<button class="btn-del" onclick="cancelarPagoSolicitado('${tipo}',${item.id})">✕ Cancelar</button>` : ''}
+    </div>`;
+  }).join('') : '<div class="pend-empty">Sin pagos a proveedor solicitados</div>';
+
+  const renderRefactSol = refactSolicitadas.length ? refactSolicitadas.map(({p,r}) => `
+    <div class="pend-item">
+      <div class="pend-lote">${p.lote}</div>
+      <div class="pend-info">
+        <div class="pend-cliente">${p.cliente}</div>
+        <div class="pend-sub">${r.concepto} · Pagado al proveedor: ${usd(r.pagado)}</div>
+      </div>
+      <div class="pend-monto">${usd(r.pagado)}</div>
+      <button class="btn-v" onclick="openP('${p.lote}')">Ver →</button>
+      ${can('editar') ? `<button class="btn-del" onclick="cancelarRefactSolicitada(${r.id})">✕ Cancelar</button>` : ''}
+    </div>`).join('') : '<div class="pend-empty">Sin refacturaciones solicitadas</div>';
+
+  $id('pend-grid').innerHTML = `
+    <div class="pend-section">
+      <div class="pend-sec-head sol-h">
+        <span style="font-size:1rem">🟠</span>
+        <div class="pend-sec-title">Facturas solicitadas · Pendientes de emitir</div>
+        <div class="pend-sec-count">${solicitadas.length}</div>
+      </div>
+      ${renderSol}
+    </div>
+    <div class="pend-section">
+      <div class="pend-sec-head env-h">
+        <span style="font-size:1rem">🔵</span>
+        <div class="pend-sec-title">Facturas emitidas · Pendientes de cobro</div>
+        <div class="pend-sec-count">${enviadas.length}</div>
+      </div>
+      ${renderEnv}
+    </div>
+    <div class="pend-section">
+      <div class="pend-sec-head" style="background:#e8f0fa;">
+        <span style="font-size:1rem">📦</span>
+        <div class="pend-sec-title">Pagos a proveedor solicitados · Para Proveeduría</div>
+        <div class="pend-sec-count">${pagosSolicitados.length}</div>
+      </div>
+      ${renderPagosSol}
+    </div>
+    <div class="pend-section">
+      <div class="pend-sec-head reemb-h">
+        <span style="font-size:1rem">🟣</span>
+        <div class="pend-sec-title">Refacturaciones al cliente solicitadas · Para Contabilidad</div>
+        <div class="pend-sec-count">${refactSolicitadas.length}</div>
+      </div>
+      ${renderRefactSol}
+    </div>
+    <div class="pend-section full">
+      <div class="pend-sec-head reemb-h">
+        <span style="font-size:1rem">⚠️</span>
+        <div class="pend-sec-title">Gastos reembolsables · Pendientes de refacturar al cliente</div>
+        <div class="pend-sec-count">${reembPdte.length}</div>
+      </div>
+      ${renderReemb}
+    </div>`;
+}
+
+function updateBadge() {
+  let count = 0;
+  P.forEach(p => {
+    count += (FACTURAS[p.lote]||[]).filter(f=>f.estado==='Solicitada'||f.estado==='Enviada'||f.estado==='Emitida').length;
+    count += (REEMB_MAP[p.lote]||[]).filter(r=>!r.ref&&Number(r.pagado)>0).length;
+    count += (COSTES_MAP[p.lote]||[]).filter(x=>x.pago_solicitado).length;
+    count += (REEMB_MAP[p.lote]||[]).filter(r=>r.pago_solicitado).length;
+    count += (REEMB_MAP[p.lote]||[]).filter(r=>r.refact_solicitado&&!r.ref).length;
+  });
+  const badge = $id('badge-count');
+  if(count>0){badge.style.display='';badge.textContent=count;}
+  else{badge.style.display='none';}
+}
+
+// ── DETALLE ──
+function openP(lote) {
+  currentLote = lote;
+  const p = P.find(x=>x.lote===lote);
+  if(!p) return;
+  const costes = COSTES_MAP[lote]||[];
+  const reembs = REEMB_MAP[lote]||[];
+  const t = projTotals(lote);
+  const facs = (FACTURAS[lote]||[]).slice().sort((a,b)=>a.hito-b.hito);
+  const pdte_cob = Math.max(0, Number(p.facturado)-Number(p.cobrado));
+
+  // hitos existentes (de BD) + slots vacíos
+  const hitosUsados = new Set(facs.map(f=>f.hito));
+  const hitoLabels = {
+    1:'Firma del contrato (30%)',
+    2:'Aprobación anteproyecto (35%)',
+    3:'Entrega documentos constructivos (35%)'
+  };
+  const hitosPorId = {};
+  facs.forEach(f => hitosPorId[f.hito]=f);
+
+  // mostrar los 3 hitos siempre
+  const hitosH = [1,2,3].map(i => {
+    const f = hitosPorId[i];
+    if(!f) {
+      const btnRegistrar = can('add_factura')
+        ? `<button class="btn-emit" onclick="event.stopPropagation();openAddFactura('${lote}',${i})">+ Registrar</button>`
+        : '';
+      const btnSolicitar = can('solicitar') && canActOnProject(lote) && Number(p.fee)>0
+        ? `<button class="btn-sol" onclick="event.stopPropagation();openSolicitar('${lote}',${i})">+ Solicitar</button>`
+        : '';
+      return `<div class="hr">
+        <div class="hn">${i}</div>
+        <div><div class="hi-desc">${hitoLabels[i]}</div><div class="hi-fac" style="color:var(--gris-c)">Sin factura</div></div>
+        <div></div>
+        <div style="text-align:right;color:var(--gris-c)">—</div>
+        <div style="display:flex;gap:6px">${btnSolicitar}${btnRegistrar}</div>
+      </div>`;
+    }
+    const cls = f.estado==='Pago'?'cob':f.estado==='Enviada'||f.estado==='Emitida'?'env':f.estado==='Solicitada'?'sol':'';
+    const accion = f.estado==='Pago'
+      ? '<span style="font-size:0.7rem;color:var(--verde)">✓ Cobrado</span>'
+      : f.estado==='Solicitada' && can('emitir')
+        ? `<button class="btn-emit" onclick="openEmitir(${f.id},'${lote}','${p.cliente}',${f.monto})">Emitir</button>`
+        : (f.estado==='Emitida'||f.estado==='Enviada') && can('cobrar')
+          ? `<button class="btn-cob" onclick="openCobro(${f.id},'${lote}','${p.cliente}',${f.monto},'${f.num}')">Cobro</button>`
+          : '';
+    const adminFac = can('editar') ? `<button class="btn-edit" onclick="openEditFactura(${f.id},'${lote}')">✏️</button><button class="btn-del" onclick="deleteFactura(${f.id})">🗑️</button>` : '';
+    return `<div class="hr">
+      <div class="hn ${cls}">${i}</div>
+      <div><div class="hi-desc">${f.hito_desc||hitoLabels[i]}</div><div class="hi-fac">${f.num?'Factura: '+f.num:'Solicitada · sin nº aún'}</div></div>
+      <div style="text-align:right">
+        <div class="hi-m">${Number(f.monto)>0?usd(f.monto):'—'}</div>
+        <span class="be e${(f.estado||'').toLowerCase().slice(0,1)}">${f.estado}</span>
+      </div>
+      <div style="text-align:right"><div style="font-size:0.65rem;color:var(--gris)">Cobrado</div><div class="hi-cobrado">${Number(f.cobrado)>0?usd(f.cobrado):'—'}</div></div>
+      <div style="display:flex;gap:4px;align-items:center">${accion}${adminFac}</div>
+    </div>`;
+  }).join('');
+
+  // banner solicitar factura
+  const hitosLibres = [1,2,3].filter(i=>!hitosUsados.has(i));
+  const bannerSolicitar = (Number(p.fee)>0 && hitosLibres.length>0)
+    ? `<div class="solicitar-banner">
+        <div class="solicitar-banner-txt">Quedan ${hitosLibres.length} hito${hitosLibres.length>1?'s':''} sin facturar · Pendiente: <strong>${usd(p.pdte_fac)}</strong></div>
+       </div>`
+    : '';
+
+  const costesH = costes.length ? costes.map(x => {
+    const saldado = (Number(x.coste) - Number(x.pagado)) <= 0.01;
+    const mon = x.moneda || 'USD';
+    const tagPago = x.pago_solicitado ? `<span class="tag-pdte-reemb" style="background:#fff0e0;color:var(--naranja);margin-left:6px">⏳ Pago solicitado</span>` : '';
+    const adminCost = can('editar') ? `<button class="btn-edit" onclick="openEditCoste(${x.id},'${lote}')">✏️</button><button class="btn-del" onclick="deleteCoste(${x.id})">🗑️</button>` : '';
+    if (can('coste_edit')) {
+      return `<div class="pr" style="grid-template-columns:1fr auto auto auto auto auto">
+        <div><div class="pr-tipo">${x.tipo}${monedaTag(mon)}${tagPago}</div><div class="pr-prov">${x.prov}</div></div>
+        <div class="pr-coste">${fmtMonto(x.coste,mon)}</div>
+        <div class="pr-pag">${fmtMonto(x.pagado,mon)}</div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <input class="rr-os-input" type="number" id="pago-${x.id}" step="0.01" min="0.01" placeholder="+ nuevo pago" style="width:105px">
+          <button class="btn-v" onclick="addPagoCoste(${x.id},${x.pagado})">Añadir</button>
+        </div>
+        <div class="pr-pdte">${saldado?'✓ Saldado':'Pdte: '+fmtMonto(Number(x.coste)-Number(x.pagado),mon)}</div>
+        <div style="display:flex;gap:3px">${adminCost}</div>
+      </div>`;
+    } else {
+      const pagoEl = saldado
+        ? `<span style="color:var(--verde);font-size:0.82rem">✓ Saldado</span>`
+        : x.pago_solicitado
+          ? `<span style="color:var(--naranja);font-size:0.78rem">⏳ Solicitado</span>`
+          : canActOnProject(lote) ? `<button class="btn-v" style="font-size:0.62rem;padding:3px 9px;background:var(--azul)" onclick="solicitarPagoCoste(${x.id})">Solicitar pago</button>` : '';
+      return `<div class="pr" style="grid-template-columns:1fr auto auto auto">
+        <div><div class="pr-tipo">${x.tipo}${monedaTag(mon)}</div><div class="pr-prov">${x.prov}</div></div>
+        <div class="pr-coste">${fmtMonto(x.coste,mon)}</div>
+        <div class="pr-pag" style="color:var(--azul)">${fmtMonto(x.pagado,mon)}</div>
+        <div>${pagoEl}</div>
+      </div>`;
+    }
+  }).join('') + `<div class="subtotal-row"><strong>Total costes</strong><div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+    ${t.c_coste_usd > 0.01 ? `<div style="display:flex;gap:20px;align-items:center">
+      <span style="font-size:0.6rem;font-weight:700;background:#e8f4ff;color:var(--azul);padding:1px 6px;border-radius:4px">$ USD</span>
+      <div><span style="font-size:0.65rem;color:var(--gris)">Coste</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">${usd(t.c_coste_usd)}</span></div>
+      <div><span style="font-size:0.65rem;color:var(--gris)">Pagado</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--azul)">${usd(t.c_pag_usd)}</span></div>
+      <div><span style="font-size:0.65rem;color:var(--gris)">Pendiente</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--naranja)">${usd(t.c_pdte_usd)}</span></div>
+    </div>` : ''}
+    ${t.c_coste_crc > 0.01 ? `<div style="display:flex;gap:20px;align-items:center">
+      <span style="font-size:0.6rem;font-weight:700;background:#fff3cd;color:#7a5a00;padding:1px 6px;border-radius:4px">₡ CRC</span>
+      <div><span style="font-size:0.65rem;color:var(--gris)">Coste</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem">₡${Number(t.c_coste_crc).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+      <div><span style="font-size:0.65rem;color:var(--gris)">Pagado</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--azul)">₡${Number(t.c_pag_crc).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+      <div><span style="font-size:0.65rem;color:var(--gris)">Pendiente</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--naranja)">₡${Number(t.c_pdte_crc).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+    </div>` : ''}
+  </div></div>` : '<div class="empty">Sin costes de servicio registrados</div>';
+
+  const reembH = reembs.length ? reembs.map(r => {
+    const pendPago = Number(r.pagado) < Number(r.coste) - 0.01;
+    const monR = r.moneda || 'USD';
+    const adminReemb = can('editar') ? `<div style="display:flex;flex-direction:column;gap:3px;justify-content:center"><button class="btn-edit" onclick="openEditReemb(${r.id},'${lote}')">✏️</button><button class="btn-del" onclick="deleteReemb(${r.id})">🗑️</button></div>` : '';
+    if (can('reemb_edit')) {
+      // Vista Contabilidad / Proveeduría / Dirección — edición directa
+      const tagPago  = r.pago_solicitado  ? `<span class="tag-pdte-reemb" style="background:#fff0e0;color:var(--naranja);margin-left:6px">⏳ Pago solicitado</span>` : '';
+      const tagRefact= r.refact_solicitado? `<span class="tag-pdte-reemb" style="margin-left:6px">⏳ Refact. solicitada</span>` : '';
+      return `<div class="rr" style="grid-template-columns:1fr auto auto auto auto auto auto">
+        <div><div class="rr-concepto">${r.concepto}${monedaTag(monR)}${tagPago}${tagRefact}</div><div class="rr-prov">${r.prov}</div></div>
+        <div class="rr-coste">${fmtMonto(r.coste,monR)}</div>
+        <div>
+          <div style="font-size:0.6rem;color:var(--azul);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px">① Pagado proveedor</div>
+          <input class="rr-os-input" type="number" value="${r.pagado}" step="0.01" min="0" style="width:85px" onchange="updateReembPagado(${r.id},this.value)">
+        </div>
+        <div>
+          <div style="font-size:0.6rem;color:var(--morado);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px">② Nº factura OS</div>
+          <input class="rr-os-input" type="text" placeholder="DS25XXX" value="${r.os||''}" onchange="updateOS(${r.id},this.value)">
+        </div>
+        <label class="rr-check" style="flex-direction:column;align-items:flex-start;gap:3px">
+          <div style="font-size:0.6rem;color:var(--morado);text-transform:uppercase;letter-spacing:0.06em">② Refacturado</div>
+          <span style="display:flex;align-items:center;gap:5px"><input type="checkbox" ${r.ref?'checked':''} onchange="toggleRef(${r.id},this.checked)">${r.ref?'✓ Sí':'Pendiente'}</span>
+        </label>
+        <div>
+          <div style="font-size:0.6rem;color:var(--verde-o);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px">② Cobrado cliente</div>
+          <input class="rr-os-input" type="number" value="${Number(r.cobrado_cliente||0).toFixed(2)}" step="0.01" min="0" style="width:85px" onchange="updateCobradoCliente(${r.id},this.value)">
+        </div>
+        ${adminReemb}
+      </div>`;
+    } else {
+      // Vista Arquitecta — solicitudes
+      const pagoEl = !pendPago
+        ? `<span style="color:var(--verde);font-size:0.82rem">✓ ${fmtMonto(r.pagado,monR)}</span>`
+        : r.pago_solicitado
+          ? `<span style="color:var(--naranja);font-size:0.78rem">⏳ Solicitado</span>`
+          : canActOnProject(lote) ? `<button class="btn-v" style="font-size:0.62rem;padding:3px 9px;background:var(--azul)" onclick="solicitarPagoProv(${r.id})">Solicitar pago</button>` : '';
+      const refactEl = r.ref
+        ? `<span style="color:var(--verde);font-size:0.82rem">✓ Refacturado${r.os?' · '+r.os:''}</span>`
+        : r.refact_solicitado
+          ? `<span style="color:var(--naranja);font-size:0.78rem">⏳ Solicitado</span>`
+          : (Number(r.pagado) > 0.01
+            ? (canActOnProject(lote) ? `<button class="btn-v" style="font-size:0.62rem;padding:3px 9px;background:var(--morado)" onclick="solicitarRefact(${r.id})">Solicitar refacturación</button>` : '')
+            : `<span style="color:var(--gris-c);font-size:0.75rem">Pdte. pago previo</span>`);
+      return `<div class="rr" style="grid-template-columns:1fr auto auto auto">
+        <div><div class="rr-concepto">${r.concepto}${monedaTag(monR)}</div><div class="rr-prov">${r.prov}</div></div>
+        <div class="rr-coste">${fmtMonto(r.coste,monR)}</div>
+        <div>
+          <div style="font-size:0.6rem;color:var(--azul);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">① Pago proveedor</div>
+          ${pagoEl}
+        </div>
+        <div>
+          <div style="font-size:0.6rem;color:var(--morado);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">② Refacturación cliente</div>
+          ${refactEl}
+        </div>
+      </div>`;
+    }
+  }).join('') + `<div class="subtotal-row"><strong>Total reembolsables</strong><div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+    ${t.r_pag_usd > 0.01 || t.r_cob_usd > 0.01 ? `<div style="display:flex;gap:20px;align-items:center">
+      <span style="font-size:0.6rem;font-weight:700;background:#e8f4ff;color:var(--azul);padding:1px 6px;border-radius:4px">$ USD</span>
+      <div><span style="font-size:0.65rem;color:var(--gris)">① Pagado proveedor</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--azul)">${usd(t.r_pag_usd)}</span></div>
+      <div><span style="font-size:0.65rem;color:var(--gris)">② Pdte. refacturar</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--morado)">${usd(t.r_pdte_usd)}</span></div>
+      <div><span style="font-size:0.65rem;color:var(--gris)">② Cobrado cliente</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--verde)">${usd(t.r_cob_usd)}</span></div>
+    </div>` : ''}
+    ${t.r_pag_crc > 0.01 || t.r_cob_crc > 0.01 ? `<div style="display:flex;gap:20px;align-items:center">
+      <span style="font-size:0.6rem;font-weight:700;background:#fff3cd;color:#7a5a00;padding:1px 6px;border-radius:4px">₡ CRC</span>
+      <div><span style="font-size:0.65rem;color:var(--gris)">① Pagado proveedor</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--azul)">₡${Number(t.r_pag_crc).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+      <div><span style="font-size:0.65rem;color:var(--gris)">② Pdte. refacturar</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--morado)">₡${Number(t.r_pdte_crc).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+      <div><span style="font-size:0.65rem;color:var(--gris)">② Cobrado cliente</span><br><span style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--verde)">₡${Number(t.r_cob_crc).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+    </div>` : ''}
+  </div></div>` : '<div class="empty">Sin gastos reembolsables registrados</div>';
+
+  // Facturas adicionales (hito=0)
+  const facturasExtra = facs.filter(f => f.hito === 0);
+  const extraFilasH = facturasExtra.map(f => {
+    const cls = f.estado==='Pago'?'cob':f.estado==='Enviada'||f.estado==='Emitida'?'env':f.estado==='Solicitada'?'sol':'';
+    const accion = f.estado==='Pago'
+      ? '<span style="font-size:0.7rem;color:var(--verde)">✓ Cobrado</span>'
+      : f.estado==='Solicitada' && can('emitir')
+        ? `<button class="btn-emit" onclick="openEmitir(${f.id},'${lote}','${p.cliente}',${f.monto})">Emitir</button>`
+        : (f.estado==='Emitida'||f.estado==='Enviada') && can('cobrar')
+          ? `<button class="btn-cob" onclick="openCobro(${f.id},'${lote}','${p.cliente}',${f.monto},'${f.num}')">Cobro</button>`
+          : '';
+    const adminFacE = can('editar') ? `<button class="btn-edit" onclick="openEditFactura(${f.id},'${lote}')">✏️</button><button class="btn-del" onclick="deleteFactura(${f.id})">🗑️</button>` : '';
+    return `<div class="hr">
+      <div class="hn ${cls}" style="font-size:0.6rem">+</div>
+      <div><div class="hi-desc">${f.hito_desc}</div><div class="hi-fac">${f.num?'Factura: '+f.num:'Pendiente de emitir'}</div></div>
+      <div style="text-align:right"><div class="hi-m">${usd(f.monto)}</div><span class="be e${(f.estado||'').toLowerCase().slice(0,1)}">${f.estado}</span></div>
+      <div style="text-align:right"><div style="font-size:0.65rem;color:var(--gris)">Cobrado</div><div class="hi-cobrado">${Number(f.cobrado)>0?usd(f.cobrado):'—'}</div></div>
+      <div style="display:flex;gap:4px;align-items:center">${accion}${adminFacE}</div>
+    </div>`;
+  }).join('');
+
+  const extraFacturasH = (facturasExtra.length > 0 || can('factura_extra')) ? `
+    <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--beige-o)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gris)">Facturas adicionales</div>
+        ${can('factura_extra')&&canActOnProject(lote)?`<button class="btn-sol" style="font-size:0.62rem;padding:3px 9px" onclick="openFacturaExtra('${lote}')">+ Añadir</button>`:''}
+      </div>
+      ${extraFilasH || '<div class="empty">Sin facturas adicionales</div>'}
+    </div>` : '';
+
+  const addReembBtn = can('add_reemb') && canActOnProject(lote)
+    ? `<button class="btn-sol" style="margin-top:8px" onclick="openAddReemb('${lote}')">+ Añadir reembolsable</button>`
+    : '';
+
+  $id('det').innerHTML = `
+    <div class="d-top">
+      <div class="d-lote">${p.lote}</div>
+      <div class="d-info">
+        <div class="d-cliente">${p.cliente}</div>
+        <div class="d-sub">Arquitecto: <strong>${p.arq}</strong> · ${p.m2} m² · <span class="be e${(p.estado||'').toLowerCase().slice(0,1)}">${p.estado}</span></div>
+      </div>
+      ${can('editar') ? `<button class="btn-edit" style="padding:6px 12px;font-size:0.72rem" onclick="openEditProyecto('${lote}')">✏️ Editar proyecto</button>` : ''}
+    </div>
+    <div class="d-hero">
+      <div class="dhc dark"><div class="dhc-label">Fee total</div><div class="dhc-val">${Number(p.fee)>0?usd(p.fee):'—'}</div><div class="dhc-sub">Honorario fijo USD</div></div>
+      <div class="dhc dark"><div class="dhc-label">Cobrado</div><div class="dhc-val" style="color:${Number(p.cobrado)>0?'var(--verde-c)':'rgba(255,255,255,0.25)'}">${Number(p.cobrado)>0?usd(p.cobrado):'—'}</div><div class="dhc-sub">${pct(Number(p.cobrado),Number(p.fee))}% del total</div></div>
+      <div class="dhc"><div class="dhc-label">Costes de servicio</div><div class="dhc-val" style="color:var(--azul)">${t.c_coste>0?usd(t.c_pag):'—'}</div><div class="dhc-sub">Pagado de ${usd(t.c_coste)} · Pdte: ${usd(t.c_pdte)}</div></div>
+      <div class="dhc"><div class="dhc-label">Reembolsables pdte.</div><div class="dhc-val" style="color:var(--morado)">${t.r_pdte>0?usd(t.r_pdte):'—'}</div><div class="dhc-sub">${t.r_pdte>0?'Pendiente de refacturar':'Sin pendientes'}</div></div>
+    </div>
+    <div class="d-sections">
+      <div class="dsec">
+        <div class="dsec-head cobros-h"><div class="dsec-icon">🧾</div><div class="dsec-title">Hitos de cobro · Honorarios</div></div>
+        <div class="dsec-body">${bannerSolicitar}${hitosH}${extraFacturasH}</div>
+      </div>
+      <div class="dsec">
+        <div class="dsec-head costes-h"><div class="dsec-icon">🔵</div><div class="dsec-title">Costes de servicio</div>
+          ${can('add_coste')&&canActOnProject(lote)?`<button class="btn-sol" style="font-size:0.62rem;padding:3px 9px" onclick="openAddCoste('${lote}')">+ Añadir</button>`:''}
+        </div>
+        <div class="dsec-body" style="font-size:0.75rem;color:var(--gris);font-style:italic;margin-bottom:10px">Incluidos en el servicio. No se cobran al cliente.</div>
+        <div class="dsec-body">${costesH}</div>
+      </div>
+      <div class="dsec full">
+        <div class="dsec-head reemb-h"><div class="dsec-icon">🟣</div><div class="dsec-title">Gastos reembolsables — deben refacturarse al cliente</div></div>
+        <div class="dsec-body" style="font-size:0.75rem;color:var(--morado);margin-bottom:10px">La empresa los paga primero y luego los cobra al cliente mediante factura OS separada.</div>
+        <div class="dsec-body">${reembH}</div>
+        <div class="dsec-body">${addReembBtn}</div>
+      </div>
+      <div class="dsec full">
+        <div class="dsec-head notas-h"><div class="dsec-icon">📝</div><div class="dsec-title">Notas del proyecto</div></div>
+        <div class="dsec-body">
+          <textarea class="notas-area" id="notas-${lote}" placeholder="Alertas, observaciones, pendientes contables..." oninput="saveNota('${lote}')">${p.notas||''}</textarea>
+          <div class="saved-msg" id="saved-${lote}">✓ Guardado</div>
+        </div>
+      </div>
+    </div>`;
+
+  $id('btn-det').style.display='block';
+  $id('btn-det').textContent=`📁 ${p.lote} · ${p.cliente}`;
+  showView('detail', $id('btn-det'));
+  window.scrollTo(0,0);
+}
+
+// ── ACCIONES ──
+
+// Solicitar factura (responsable)
+function openSolicitar(lote, hitoPreselect) {
+  const p = P.find(x=>x.lote===lote);
+  modalData = {lote, fee: Number(p.fee)};
+  $id('modal-sol-sub').textContent = `${p.lote} · ${p.cliente}`;
+  $id('modal-sol-info').innerHTML = `Fee total: <strong>${usd(p.fee)}</strong> · Pendiente de facturar: <strong>${usd(p.pdte_fac)}</strong>`;
+  $id('sol-hito').value='';
+  $id('sol-monto').value='';
+  $id('sol-sugerido').value='';
+  $id('sol-notas').value='';
+
+  const usados = new Set((FACTURAS[lote]||[]).map(f=>f.hito));
+  [1,2,3].forEach(i=>{
+    const opt = $id('sol-hito').querySelector(`option[value="${i}"]`);
+    if(opt) opt.disabled = usados.has(i);
+  });
+
+  if(hitoPreselect) {
+    $id('sol-hito').value = hitoPreselect;
+    updateMontoSugerido();
+  }
+  openModal('modal-solicitar');
+}
+
+function updateMontoSugerido() {
+  const hito = parseInt($id('sol-hito').value);
+  const fee = modalData.fee || 0;
+  const porcentajes = {1:0.30, 2:0.35, 3:0.35};
+  if(hito && porcentajes[hito]) {
+    const sugerido = fee * porcentajes[hito];
+    $id('sol-sugerido').value = '$' + sugerido.toFixed(2);
+    $id('sol-monto').value = sugerido.toFixed(2);
+  }
+}
+
+async function submitSolicitud(e) {
+  e.preventDefault();
+  const hito = parseInt($id('sol-hito').value);
+  const monto = parseFloat($id('sol-monto').value);
+  const notas = $id('sol-notas').value;
+  const hitoLabels = {1:'Firma del contrato (30%)',2:'Aprobación anteproyecto (35%)',3:'Entrega documentos constructivos (35%)'};
+  const hito_desc = (notas ? notas + ' · ' : '') + hitoLabels[hito];
+
+  const {error} = await sb.from('facturas').insert({
+    lote: modalData.lote,
+    hito,
+    hito_desc: hitoLabels[hito],
+    monto,
+    cobrado: 0,
+    estado: 'Solicitada',
+    solicitado_por: currentUser.name,
+    solicitado_at: new Date().toISOString()
+  });
+
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-solicitar');
+  showToast('Solicitud enviada a contabilidad ✓','ok');
+  await loadAll();
+}
+
+// Emitir factura (contabilidad)
+function openEmitir(facId, lote, cliente, monto) {
+  modalData = {facId, lote};
+  $id('modal-emit-sub').textContent = `${lote} · ${cliente}`;
+  $id('modal-emit-info').innerHTML = `Monto solicitado: <strong>${usd(monto)}</strong>`;
+  $id('emit-num').value='';
+  $id('emit-monto').value=Number(monto).toFixed(2);
+  $id('emit-estado').value='Emitida';
+  openModal('modal-emitir');
+}
+
+async function submitEmitir(e) {
+  e.preventDefault();
+  const num = $id('emit-num').value.trim();
+  const monto = parseFloat($id('emit-monto').value);
+  const estado = $id('emit-estado').value;
+
+  const {error} = await sb.from('facturas').update({
+    num, monto, estado,
+    emitido_at: new Date().toISOString()
+  }).eq('id', modalData.facId);
+
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-emitir');
+  showToast('Factura '+num+' registrada ✓','ok');
+  await loadAll();
+}
+
+// Añadir factura existente (contabilidad)
+function openAddFactura(lote, hitoPreselect) {
+  const p = P.find(x=>x.lote===lote);
+  modalData = {lote};
+  $id('modal-addfac-sub').textContent = `${lote} · ${p?.cliente||''}`;
+  $id('form-add-factura').reset();
+  const usados = new Set((FACTURAS[lote]||[]).map(f=>f.hito));
+  [1,2,3].forEach(i => {
+    const opt = $id('addfac-hito').querySelector(`option[value="${i}"]`);
+    if(opt) opt.disabled = usados.has(i);
+  });
+  if(hitoPreselect) $id('addfac-hito').value = hitoPreselect;
+  openModal('modal-add-factura');
+}
+
+async function submitAddFactura(e) {
+  e.preventDefault();
+  const hito = parseInt($id('addfac-hito').value);
+  const num = $id('addfac-num').value.trim();
+  const estado = $id('addfac-estado').value;
+  const monto = parseFloat($id('addfac-monto').value);
+  const cobrado = parseFloat($id('addfac-cobrado').value) || 0;
+  const hitoLabels = {1:'Firma del contrato (30%)',2:'Aprobación anteproyecto (35%)',3:'Entrega documentos constructivos (35%)'};
+
+  const {error} = await sb.from('facturas').insert({
+    lote: modalData.lote, hito,
+    hito_desc: hitoLabels[hito],
+    num, monto, cobrado, estado,
+    solicitado_por: currentUser.name,
+    solicitado_at: new Date().toISOString(),
+    emitido_at: new Date().toISOString(),
+    cobrado_at: estado==='Pago' ? new Date().toISOString() : null
+  });
+
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-add-factura');
+  showToast('Factura '+num+' registrada ✓','ok');
+  await loadAll();
+}
+
+// Registrar cobro (contabilidad)
+function openCobro(facId, lote, cliente, monto, num) {
+  modalData = {facId, lote};
+  $id('modal-cob-sub').textContent = `${lote} · ${cliente}`;
+  $id('modal-cob-info').innerHTML = `Factura: <strong>${num}</strong> · Monto: <strong>${usd(monto)}</strong>`;
+  $id('cob-importe').value=Number(monto).toFixed(2);
+  openModal('modal-cobro');
+}
+
+async function submitCobro(e) {
+  e.preventDefault();
+  const cobrado = parseFloat($id('cob-importe').value);
+
+  const {error} = await sb.from('facturas').update({
+    cobrado,
+    estado: 'Pago',
+    cobrado_at: new Date().toISOString()
+  }).eq('id', modalData.facId);
+
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-cobro');
+  showToast('Cobro registrado ✓','ok');
+  await loadAll();
+}
+
+// Actualizar pagado de coste (proveedor)
+async function updateCostePagado(costeId, val) {
+  const pagado = parseFloat(val) || 0;
+  const {error} = await sb.from('costes').update({pagado}).eq('id', costeId);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Pago a proveedor actualizado ✓','ok');
+  Object.values(COSTES_MAP).flat().forEach(c => { if(c.id===costeId) c.pagado=pagado; });
+  buildTable(getList());
+  buildPendientes();
+}
+
+// Actualizar pagado de reembolsable (lo que ESM pagó al proveedor)
+async function updateReembPagado(reembId, val) {
+  const pagado = parseFloat(val) || 0;
+  const {error} = await sb.from('reembolsables').update({pagado, pago_solicitado: false, monto_solicitado: 0}).eq('id', reembId);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Pago a proveedor registrado ✓','ok');
+  Object.values(REEMB_MAP).flat().forEach(r => { if(r.id===reembId){ r.pagado=pagado; r.pago_solicitado=false; r.monto_solicitado=0; } });
+  buildTable(getList());
+  buildPendientes();
+  updateBadge();
+}
+
+// Actualizar cobrado del cliente en reembolsable
+async function updateCobradoCliente(reembId, val) {
+  const cobrado_cliente = parseFloat(val) || 0;
+  const {error} = await sb.from('reembolsables').update({cobrado_cliente}).eq('id', reembId);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Cobro del cliente actualizado ✓','ok');
+  Object.values(REEMB_MAP).flat().forEach(r => { if(r.id===reembId) r.cobrado_cliente=cobrado_cliente; });
+  buildTable(getList());
+}
+
+// Actualizar OS de reembolsable
+async function updateOS(reembId, val) {
+  const {error} = await sb.from('reembolsables').update({os: val}).eq('id', reembId);
+  if(error) showToast('Error guardando: '+error.message,'err');
+  else showToast('Nº factura guardado ✓','ok');
+  // actualizar mapa local sin recargar todo
+  Object.values(REEMB_MAP).flat().forEach(r => { if(r.id===reembId) r.os=val; });
+  updateBadge();
+}
+
+// Toggle refacturado
+async function toggleRef(reembId, checked) {
+  const updates = {ref: checked};
+  if(checked) updates.refact_solicitado = false;
+  const {error} = await sb.from('reembolsables').update(updates).eq('id', reembId);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast(checked?'Marcado como refacturado ✓':'Desmarcado','ok');
+  Object.values(REEMB_MAP).flat().forEach(r => { if(r.id===reembId){ r.ref=checked; if(checked) r.refact_solicitado=false; } });
+  P = P.map(p => p);
+  buildTable(getList());
+  buildPendientes();
+  updateBadge();
+}
+
+// Arquitecta solicita pago al proveedor — abre modal para especificar importe
+function solicitarPagoProv(reembId) {
+  const r = Object.values(REEMB_MAP).flat().find(x=>x.id===reembId);
+  if(!r) return;
+  modalData = {tipo: 'reemb', id: reembId};
+  const pdte = Number(r.coste) - Number(r.pagado);
+  $id('modal-solpago-sub').textContent = `${r.concepto} · ${r.prov}`;
+  $id('modal-solpago-info').innerHTML = `Coste total: <strong>${usd(r.coste)}</strong> · Ya pagado: <strong>${usd(r.pagado)}</strong> · Pendiente: <strong>${usd(pdte)}</strong>`;
+  $id('solpago-monto').value = pdte.toFixed(2);
+  openModal('modal-solicitar-pago');
+}
+
+// Arquitecta solicita refacturación al cliente (crea pendiente para Contabilidad)
+async function solicitarRefact(reembId) {
+  const {error} = await sb.from('reembolsables').update({refact_solicitado: true}).eq('id', reembId);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Refacturación al cliente solicitada ✓','ok');
+  Object.values(REEMB_MAP).flat().forEach(r => { if(r.id===reembId) r.refact_solicitado=true; });
+  buildPendientes();
+  updateBadge();
+  openP(currentLote);
+}
+
+// Añadir reembolsable (contabilidad)
+function openAddReemb(lote) {
+  modalData = {lote};
+  const p = P.find(x=>x.lote===lote);
+  $id('modal-reemb-sub').textContent = `${lote} · ${p?.cliente||''}`;
+  $id('form-reemb').reset();
+  openModal('modal-reemb');
+}
+
+async function submitReemb(e) {
+  e.preventDefault();
+  const {error} = await sb.from('reembolsables').insert({
+    lote: modalData.lote,
+    concepto: $id('reemb-concepto').value.trim(),
+    prov: $id('reemb-prov').value.trim(),
+    coste: parseFloat($id('reemb-coste').value),
+    pagado: parseFloat($id('reemb-pagado').value),
+    moneda: $id('reemb-moneda').value,
+    os: '',
+    ref: false
+  });
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-reemb');
+  showToast('Reembolsable añadido ✓','ok');
+  await loadAll();
+}
+
+// Guardar notas
+let notaTimer = null;
+async function saveNota(lote) {
+  clearTimeout(notaTimer);
+  notaTimer = setTimeout(async () => {
+    const notas = $id(`notas-${lote}`)?.value || '';
+    const {error} = await sb.from('proyectos').update({notas}).eq('lote', lote);
+    if(!error) {
+      const el = $id(`saved-${lote}`);
+      if(el){ el.style.display='block'; setTimeout(()=>el.style.display='none',2000); }
+      P = P.map(p => p.lote===lote ? {...p, notas} : p);
+    }
+  }, 800);
+}
+
+// ── CANCELAR SOLICITUDES (solo Krisna y Dirección) ──
+
+async function cancelarSolicitudFactura(facId) {
+  if(!confirm('¿Cancelar esta solicitud de factura? Se eliminará el registro.')) return;
+  const {error} = await sb.from('facturas').delete().eq('id', facId);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Solicitud cancelada ✓','ok');
+  await loadAll();
+}
+
+async function cancelarPagoSolicitado(tipo, id) {
+  if(!confirm('¿Cancelar esta solicitud de pago?')) return;
+  const table = tipo === 'coste' ? 'costes' : 'reembolsables';
+  const {error} = await sb.from(table).update({pago_solicitado: false, monto_solicitado: 0}).eq('id', id);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Solicitud de pago cancelada ✓','ok');
+  if(tipo === 'coste') {
+    Object.values(COSTES_MAP).flat().forEach(c => { if(c.id===id){ c.pago_solicitado=false; c.monto_solicitado=0; } });
+  } else {
+    Object.values(REEMB_MAP).flat().forEach(r => { if(r.id===id){ r.pago_solicitado=false; r.monto_solicitado=0; } });
+  }
+  buildPendientes();
+  updateBadge();
+}
+
+async function cancelarRefactSolicitada(reembId) {
+  if(!confirm('¿Cancelar esta solicitud de refacturación?')) return;
+  const {error} = await sb.from('reembolsables').update({refact_solicitado: false}).eq('id', reembId);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Solicitud de refacturación cancelada ✓','ok');
+  Object.values(REEMB_MAP).flat().forEach(r => { if(r.id===reembId) r.refact_solicitado=false; });
+  buildPendientes();
+  updateBadge();
+}
+
+// ── EDITAR / ELIMINAR (solo Krisna y Dirección) ──
+
+function openNuevoProyecto() {
+  $id('form-nuevo-proyecto').reset();
+  // pre-rellenar arquitecta si el usuario es arquitecto
+  const arqSelect = $id('nuevo-arq');
+  const nombres = ['Claudia','Isolda','Aníbal','Esteban'];
+  const match = nombres.find(n => n === currentUser.name || n.normalize('NFD').replace(/[̀-ͯ]/g,'') === currentUser.name);
+  if(match) arqSelect.value = match === 'Aníbal' ? 'Anibal' : match;
+  openModal('modal-nuevo-proyecto');
+}
+
+async function submitNuevoProyecto(e) {
+  e.preventDefault();
+  const lote = $id('nuevo-lote').value.trim().toUpperCase();
+  const cliente = $id('nuevo-cliente').value.trim();
+  const arq = $id('nuevo-arq').value;
+  const estado = $id('nuevo-estado').value;
+  const m2 = parseInt($id('nuevo-m2').value)||0;
+  const fee = parseFloat($id('nuevo-fee').value)||0;
+
+  const {error} = await sb.from('proyectos').insert({lote, cliente, arq, estado, m2, fee, notas:''});
+  if(error){
+    if(error.code === '23505') showToast('Ya existe un proyecto con ese código de lote','err');
+    else showToast('Error: '+error.message,'err');
+    return;
+  }
+  closeModal('modal-nuevo-proyecto');
+  showToast(`Proyecto ${lote} creado ✓`,'ok');
+  await loadAll();
+  openP(lote);
+}
+
+function openEditProyecto(lote) {
+  const p = P.find(x=>x.lote===lote);
+  if(!p) return;
+  modalData = {lote};
+  $id('modal-editproy-sub').textContent = `${lote} · ${p.cliente}`;
+  $id('editproy-cliente').value = p.cliente||'';
+  $id('editproy-arq').value = p.arq||'—';
+  $id('editproy-estado').value = p.estado||'Creado';
+  $id('editproy-m2').value = p.m2||0;
+  $id('editproy-fee').value = Number(p.fee||0).toFixed(2);
+  openModal('modal-edit-proyecto');
+}
+
+async function submitEditProyecto(e) {
+  e.preventDefault();
+  const updates = {
+    cliente: $id('editproy-cliente').value.trim(),
+    arq: $id('editproy-arq').value,
+    estado: $id('editproy-estado').value,
+    m2: parseInt($id('editproy-m2').value)||0,
+    fee: parseFloat($id('editproy-fee').value)||0
+  };
+  const {error} = await sb.from('proyectos').update(updates).eq('lote', modalData.lote);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-edit-proyecto');
+  showToast('Proyecto actualizado ✓','ok');
+  await loadAll();
+}
+
+async function deleteFactura(id) {
+  if(!confirm('¿Eliminar esta factura? Esta acción no se puede deshacer.')) return;
+  const {error} = await sb.from('facturas').delete().eq('id', id);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Factura eliminada ✓','ok');
+  await loadAll();
+}
+
+function openEditFactura(id, lote) {
+  const fac = (FACTURAS[lote]||[]).find(f=>f.id===id);
+  if(!fac) return;
+  modalData = {id, lote};
+  const p = P.find(x=>x.lote===lote);
+  $id('modal-editfac-sub').textContent = `${lote} · ${p?.cliente||''}`;
+  $id('editfac-desc').value = fac.hito_desc||'';
+  $id('editfac-num').value = fac.num||'';
+  $id('editfac-estado').value = fac.estado||'Solicitada';
+  $id('editfac-monto').value = Number(fac.monto||0).toFixed(2);
+  $id('editfac-cobrado').value = Number(fac.cobrado||0).toFixed(2);
+  openModal('modal-edit-factura');
+}
+
+async function submitEditFactura(e) {
+  e.preventDefault();
+  const {error} = await sb.from('facturas').update({
+    hito_desc: $id('editfac-desc').value.trim(),
+    num: $id('editfac-num').value.trim(),
+    estado: $id('editfac-estado').value,
+    monto: parseFloat($id('editfac-monto').value),
+    cobrado: parseFloat($id('editfac-cobrado').value)||0
+  }).eq('id', modalData.id);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-edit-factura');
+  showToast('Factura actualizada ✓','ok');
+  await loadAll();
+}
+
+async function deleteCoste(id) {
+  if(!confirm('¿Eliminar este coste? Esta acción no se puede deshacer.')) return;
+  const {error} = await sb.from('costes').delete().eq('id', id);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Coste eliminado ✓','ok');
+  await loadAll();
+}
+
+function openEditCoste(id, lote) {
+  const coste = (COSTES_MAP[lote]||[]).find(x=>x.id===id);
+  if(!coste) return;
+  modalData = {id, lote};
+  const p = P.find(x=>x.lote===lote);
+  $id('modal-editcost-sub').textContent = `${lote} · ${p?.cliente||''}`;
+  $id('editcost-tipo').value = coste.tipo||'';
+  $id('editcost-prov').value = coste.prov||'';
+  $id('editcost-coste').value = Number(coste.coste||0).toFixed(2);
+  $id('editcost-pagado').value = Number(coste.pagado||0).toFixed(2);
+  $id('editcost-moneda').value = coste.moneda||'USD';
+  openModal('modal-edit-coste');
+}
+
+async function submitEditCoste(e) {
+  e.preventDefault();
+  const {error} = await sb.from('costes').update({
+    tipo: $id('editcost-tipo').value.trim(),
+    prov: $id('editcost-prov').value.trim(),
+    coste: parseFloat($id('editcost-coste').value),
+    pagado: parseFloat($id('editcost-pagado').value)||0,
+    moneda: $id('editcost-moneda').value
+  }).eq('id', modalData.id);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-edit-coste');
+  showToast('Coste actualizado ✓','ok');
+  await loadAll();
+}
+
+async function deleteReemb(id) {
+  if(!confirm('¿Eliminar este gasto reembolsable? Esta acción no se puede deshacer.')) return;
+  const {error} = await sb.from('reembolsables').delete().eq('id', id);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Reembolsable eliminado ✓','ok');
+  await loadAll();
+}
+
+function openEditReemb(id, lote) {
+  const r = (REEMB_MAP[lote]||[]).find(x=>x.id===id);
+  if(!r) return;
+  modalData = {id, lote};
+  const p = P.find(x=>x.lote===lote);
+  $id('modal-editreemb-sub').textContent = `${lote} · ${p?.cliente||''}`;
+  $id('editreemb-concepto').value = r.concepto||'';
+  $id('editreemb-prov').value = r.prov||'';
+  $id('editreemb-coste').value = Number(r.coste||0).toFixed(2);
+  $id('editreemb-pagado').value = Number(r.pagado||0).toFixed(2);
+  $id('editreemb-os').value = r.os||'';
+  $id('editreemb-cobrado-cliente').value = Number(r.cobrado_cliente||0).toFixed(2);
+  $id('editreemb-ref').checked = !!r.ref;
+  $id('editreemb-moneda').value = r.moneda||'USD';
+  openModal('modal-edit-reemb');
+}
+
+async function submitEditReemb(e) {
+  e.preventDefault();
+  const {error} = await sb.from('reembolsables').update({
+    concepto: $id('editreemb-concepto').value.trim(),
+    prov: $id('editreemb-prov').value.trim(),
+    coste: parseFloat($id('editreemb-coste').value),
+    pagado: parseFloat($id('editreemb-pagado').value)||0,
+    os: $id('editreemb-os').value.trim(),
+    cobrado_cliente: parseFloat($id('editreemb-cobrado-cliente').value)||0,
+    ref: $id('editreemb-ref').checked,
+    moneda: $id('editreemb-moneda').value
+  }).eq('id', modalData.id);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-edit-reemb');
+  showToast('Reembolsable actualizado ✓','ok');
+  await loadAll();
+}
+
+// Añadir pago incremental a coste de servicio (contabilidad/proveeduría)
+async function addPagoCoste(costeId, pagadoActual) {
+  const input = $id('pago-' + costeId);
+  const nuevo = parseFloat(input?.value);
+  if(!nuevo || nuevo <= 0) { showToast('Introduce un importe válido', 'err'); return; }
+  const nuevoPagado = Number(pagadoActual) + nuevo;
+  const {error} = await sb.from('costes').update({pagado: nuevoPagado, pago_solicitado: false, monto_solicitado: 0}).eq('id', costeId);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Pago registrado ✓','ok');
+  Object.values(COSTES_MAP).flat().forEach(c => { if(c.id===costeId){ c.pagado=nuevoPagado; c.pago_solicitado=false; c.monto_solicitado=0; } });
+  await loadAll();
+}
+
+// Arquitecta solicita pago de coste a Proveeduría — abre modal para especificar importe
+function solicitarPagoCoste(costeId) {
+  const c = Object.values(COSTES_MAP).flat().find(x=>x.id===costeId);
+  if(!c) return;
+  modalData = {tipo: 'coste', id: costeId};
+  const pdte = Number(c.coste) - Number(c.pagado);
+  $id('modal-solpago-sub').textContent = `${c.tipo} · ${c.prov}`;
+  $id('modal-solpago-info').innerHTML = `Coste total: <strong>${usd(c.coste)}</strong> · Ya pagado: <strong>${usd(c.pagado)}</strong> · Pendiente: <strong>${usd(pdte)}</strong>`;
+  $id('solpago-monto').value = pdte.toFixed(2);
+  openModal('modal-solicitar-pago');
+}
+
+async function submitSolicitarPago(e) {
+  e.preventDefault();
+  const monto = parseFloat($id('solpago-monto').value);
+  const {tipo, id} = modalData;
+  const table = tipo === 'coste' ? 'costes' : 'reembolsables';
+  const {error} = await sb.from(table).update({pago_solicitado: true, monto_solicitado: monto}).eq('id', id);
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  showToast('Pago solicitado a Proveeduría ✓','ok');
+  if(tipo === 'coste') {
+    Object.values(COSTES_MAP).flat().forEach(c => { if(c.id===id){ c.pago_solicitado=true; c.monto_solicitado=monto; } });
+  } else {
+    Object.values(REEMB_MAP).flat().forEach(r => { if(r.id===id){ r.pago_solicitado=true; r.monto_solicitado=monto; } });
+  }
+  closeModal('modal-solicitar-pago');
+  buildPendientes();
+  updateBadge();
+  openP(currentLote);
+}
+
+// Añadir nuevo coste de servicio
+function openAddCoste(lote) {
+  modalData = {lote};
+  const p = P.find(x=>x.lote===lote);
+  $id('modal-addcoste-sub').textContent = `${lote} · ${p?.cliente||''}`;
+  $id('form-add-coste').reset();
+  openModal('modal-add-coste');
+}
+
+async function submitAddCoste(e) {
+  e.preventDefault();
+  const {error} = await sb.from('costes').insert({
+    lote: modalData.lote,
+    tipo: $id('addcoste-tipo').value.trim(),
+    prov: $id('addcoste-prov').value.trim(),
+    coste: parseFloat($id('addcoste-coste').value),
+    pagado: parseFloat($id('addcoste-pagado').value) || 0,
+    moneda: $id('addcoste-moneda').value
+  });
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-add-coste');
+  showToast('Coste añadido ✓','ok');
+  await loadAll();
+}
+
+// Solicitar factura extra (concepto libre, hito=0)
+function openFacturaExtra(lote) {
+  modalData = {lote};
+  const p = P.find(x=>x.lote===lote);
+  $id('modal-fex-sub').textContent = `${lote} · ${p?.cliente||''}`;
+  $id('form-factura-extra').reset();
+  openModal('modal-factura-extra');
+}
+
+async function submitFacturaExtra(e) {
+  e.preventDefault();
+  const concepto = $id('fex-concepto').value.trim();
+  const monto = parseFloat($id('fex-monto').value);
+  const notas = $id('fex-notas').value.trim();
+  const hito_desc = notas ? `${concepto} · ${notas}` : concepto;
+  const {error} = await sb.from('facturas').insert({
+    lote: modalData.lote,
+    hito: 0,
+    hito_desc,
+    monto,
+    cobrado: 0,
+    estado: 'Solicitada',
+    solicitado_por: currentUser.name,
+    solicitado_at: new Date().toISOString()
+  });
+  if(error){ showToast('Error: '+error.message,'err'); return; }
+  closeModal('modal-factura-extra');
+  showToast('Factura adicional solicitada ✓','ok');
+  await loadAll();
+}
+
+// ── MODALES ──
+function openModal(id) { $id(id).classList.add('open'); }
+function closeModal(id) { $id(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open'); });
+});
+
+// ── TOAST ──
+let toastTimer = null;
+function showToast(msg, type='ok') {
+  clearTimeout(toastTimer);
+  const t = $id('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── NAVEGACIÓN ──
+function showView(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  $id('view-'+name)?.classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+function goBack() {
+  currentLote = null;
+  showView('resumen', $id('nb-resumen'));
+  $id('btn-det').style.display='none';
+}
+
+// ── INIT ──
+const stored = localStorage.getItem('esm_user');
+if(stored) {
+  try {
+    currentUser = JSON.parse(stored);
+    applyLogin();
+    loadAll();
+  } catch(e) { localStorage.removeItem('esm_user'); }
+} else {
+  $id('view-loading').style.display='none';
+  $id('overlay-login').style.display='flex';
+}
+</script>
+</body>
+</html>
