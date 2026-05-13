@@ -55,10 +55,10 @@ main{padding:32px 40px 60px;max-width:1700px;margin:0 auto;}
 .kpi-section-head.costes{background:#1a2a3a;color:rgba(255,255,255,0.55);}
 .kpi-section-head.reemb{background:#2a1a3a;color:rgba(255,255,255,0.55);}
 .kpi-section-body{display:grid;grid-template-columns:repeat(3,1fr);gap:0;}
-.kpi{padding:14px 16px;border-right:1px solid var(--beige);}
+.kpi{padding:12px 10px;border-right:1px solid var(--beige);min-width:0;}
 .kpi:last-child{border-right:none;}
-.kpi-n{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:300;line-height:1;}
-.kpi-l{font-size:0.62rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gris);margin-top:3px;}
+.kpi-n{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:300;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kpi-l{font-size:0.58rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gris);margin-top:3px;}
 .cn-verde{color:var(--verde);} .cn-naranja{color:var(--naranja);} .cn-rojo{color:var(--rojo);}
 .cn-azul{color:var(--azul);} .cn-morado{color:var(--morado);}
 
@@ -272,13 +272,9 @@ td.sep{border-left:2px solid var(--beige-o);}
       <hr class="login-divider">
       <div class="login-label" style="margin-bottom:6px">Administración</div>
       <div class="login-users">
-        <button class="login-btn conta" onclick="selectUser('Luis','contabilidad')">Luis</button>
-        <button class="login-btn conta" onclick="selectUser('Krisna','contabilidad')">Krisna</button>
+        <button class="login-btn conta" onclick="selectUser('Contabilidad','contabilidad')">🧾 Contabilidad</button>
+        <button class="login-btn conta" onclick="selectUser('Administración','administracion')">🏢 Administración</button>
         <button class="login-btn conta" onclick="selectUser('Proveeduría','proveeduria')">📦 Proveeduría</button>
-      </div>
-      <hr class="login-divider">
-      <div class="login-users">
-        <button class="login-btn dir" onclick="selectUser('Dirección','direccion')">👤 Dirección · Acceso completo</button>
       </div>
     </div>
 
@@ -896,39 +892,23 @@ let _pendingUser = null;
 
 // ── CONTRASEÑAS (cambiar aquí) ──
 const USERS = [
-  {name:'Claudia',     role:'arquitecto',   pass:'Planos#47'},
-  {name:'Isolda',      role:'arquitecto',   pass:'Terraz@81'},
-  {name:'Aníbal',      role:'arquitecto',   pass:'Fachad!3'},
-  {name:'Esteban',     role:'arquitecto',   pass:'Croquis$9'},
-  {name:'Luis',        role:'contabilidad', pass:'Factur@55'},
-  {name:'Krisna',      role:'contabilidad', pass:'Ledger!2k'},
-  {name:'Proveeduría', role:'proveeduria',  pass:'Almacen#6'},
-  {name:'Dirección',   role:'direccion',    pass:'ESMdir@99'},
+  {name:'Claudia',        role:'arquitecto',    pass:'Planos#47'},
+  {name:'Isolda',         role:'arquitecto',    pass:'Terraz@81'},
+  {name:'Aníbal',         role:'arquitecto',    pass:'Fachad!3'},
+  {name:'Esteban',        role:'arquitecto',    pass:'Croquis$9'},
+  {name:'Contabilidad',   role:'contabilidad',  pass:'Conta@ESM1'},
+  {name:'Administración', role:'administracion', pass:'Admin#ESM2'},
+  {name:'Proveeduría',    role:'proveeduria',   pass:'Prov!ESM3'},
 ];
 let curF = 'todos', curS = '', currentLote = null;
 let modalData = {}; // datos del modal activo
 
 // ── PERMISOS ──
-// arquitecto: solicitar facturas para sus proyectos
-// contabilidad: emitir facturas, registrar cobros
-// proveeduria: gestionar reembolsables y costes
-// direccion: acceso completo
+// arquitecto: solo visualización
+// contabilidad / administracion / proveeduria: acceso total
 function can(accion) {
   const r = currentUser?.role;
-  if (r === 'direccion') return true;
-  if (accion === 'solicitar')   return r === 'arquitecto';
-  if (accion === 'add_factura') return r === 'contabilidad';
-  if (accion === 'emitir')      return r === 'contabilidad';
-  if (accion === 'cobrar')      return r === 'contabilidad';
-  if (accion === 'reemb_edit')  return r === 'contabilidad' || r === 'proveeduria';
-  if (accion === 'add_reemb')   return r === 'arquitecto' || r === 'contabilidad' || r === 'proveeduria';
-  if (accion === 'coste_edit')  return r === 'contabilidad' || r === 'proveeduria';
-  if (accion === 'add_coste')   return r === 'arquitecto' || r === 'contabilidad' || r === 'proveeduria';
-  if (accion === 'factura_extra') return r === 'arquitecto';
-  if (accion === 'solicitar_pago_prov') return r === 'arquitecto';
-  if (accion === 'solicitar_refact')    return r === 'arquitecto';
-  if (accion === 'editar') return currentUser?.name === 'Krisna' || r === 'direccion';
-  if (accion === 'crear_proyecto') return r === 'arquitecto' || r === 'contabilidad' || r === 'direccion';
+  if (r === 'contabilidad' || r === 'administracion' || r === 'proveeduria') return true;
   return false;
 }
 
@@ -1024,7 +1004,7 @@ function login(name, role) {
 function applyLogin() {
   $id('overlay-login').style.display = 'none';
   $id('user-badge').style.display = '';
-  const roleLabel = {arquitecto:'Arquitecto', contabilidad:'Contabilidad', proveeduria:'Proveeduría', direccion:'Dirección'}[currentUser.role] || currentUser.role;
+  const roleLabel = {arquitecto:'Arquitecto', contabilidad:'Contabilidad', administracion:'Administración', proveeduria:'Proveeduría'}[currentUser.role] || currentUser.role;
   $id('user-badge').innerHTML = currentUser.name + '<span class="user-role">' + roleLabel + '</span>';
   $id('btn-logout').style.display = '';
   if(can('crear_proyecto')) $id('btn-nuevo-proy').style.display = '';
