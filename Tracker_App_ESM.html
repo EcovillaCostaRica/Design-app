@@ -1337,12 +1337,28 @@ function openP(lote) {
     2:'Aprobación anteproyecto (35%)',
     3:'Entrega documentos constructivos (35%)'
   };
-  const hitosPorId = {};
-  facs.forEach(f => hitosPorId[f.hito]=f);
+  const hitosPorNum = {};
+  facs.filter(f=>f.hito>0).forEach(f => {
+    if(!hitosPorNum[f.hito]) hitosPorNum[f.hito] = [];
+    hitosPorNum[f.hito].push(f);
+  });
+
+  // banner de duplicados
+  const duplicadosH = Object.entries(hitosPorNum)
+    .filter(([,arr]) => arr.length > 1)
+    .map(([num, arr]) => {
+      const extras = arr.slice(1);
+      return extras.map(fx => `<div style="display:flex;align-items:center;gap:10px;background:#fff8e8;border:1px solid #f5c842;border-radius:6px;padding:8px 14px;margin-bottom:6px">
+        <span style="font-size:0.7rem">⚠️</span>
+        <span style="font-size:0.8rem;color:#7a4a00;flex:1"><strong>Registro duplicado</strong> — Hito ${num}${fx.num?' · Factura '+fx.num:''} · ${usd(fx.monto)} · ${fx.estado}</span>
+        ${can('editar')?`<button class="btn-del" onclick="deleteFactura(${fx.id})">🗑️ Eliminar</button>`:'<span style="font-size:0.75rem;color:var(--gris)">Contacta a Administración para eliminar</span>'}
+      </div>`).join('');
+    }).join('');
 
   // mostrar los 3 hitos siempre
   const hitosH = [1,2,3].map(i => {
-    const f = hitosPorId[i];
+    const arr = hitosPorNum[i] || [];
+    const f = arr[0];
     if(!f) {
       const btnRegistrar = can('add_factura')
         ? `<button class="btn-emit" onclick="event.stopPropagation();openAddFactura('${lote}',${i})">+ Registrar</button>`
@@ -1555,7 +1571,7 @@ function openP(lote) {
     <div class="d-sections">
       <div class="dsec">
         <div class="dsec-head cobros-h"><div class="dsec-icon">🧾</div><div class="dsec-title">Hitos de cobro · Honorarios</div></div>
-        <div class="dsec-body">${bannerSolicitar}${hitosH}${extraFacturasH}</div>
+        <div class="dsec-body">${duplicadosH}${bannerSolicitar}${hitosH}${extraFacturasH}</div>
       </div>
       <div class="dsec">
         <div class="dsec-head costes-h"><div class="dsec-icon">🔵</div><div class="dsec-title">Costes de servicio</div>
